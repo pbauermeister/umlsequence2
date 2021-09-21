@@ -36,7 +36,7 @@ Umlsequence syntax example:
     # deactivation
     T- O-
 
-![example](https://raw.githubusercontent.com/pbauermeister/umlsequence2/main/examples/tut-4.svg?token=ABXD3MS4BHQKTOTX63EDBYDBKN4LS "Example")
+![example](https://raw.githubusercontent.com/pbauermeister/umlsequence2/master/examples/tut-4.svg "Example")
 
 Syntax and Examples
 -------------------
