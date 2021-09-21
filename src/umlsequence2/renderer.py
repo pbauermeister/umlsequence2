@@ -1,0 +1,473 @@
+import sys
+import re
+from subprocess import Popen, PIPE
+from collections import OrderedDict, namedtuple
+
+from .config import CONFIG as C
+from .svg_builder import SvgBuilder
+
+RX_COMMENT_POS = re.compile(r'\s*(\S+)\s+(\S+)')
+
+
+Object  = namedtuple('object', 'type index name label ypos row')
+Comment = namedtuple('comment', 'xport yport')
+Frame   = namedtuple('frame', 'xpos ypos label')
+
+
+def error(message, renderer):
+    print(f'ERROR: {message}:', file=sys.stderr)
+    print(f'  {renderer.line_nr}: {renderer.line}', file=sys.stderr)
+    sys.exit(1)
+
+
+class CheckedOrderedDict(OrderedDict):
+    def __init__(self, name, renderer):
+        self.name = name
+        self.renderer = renderer
+        super().__init__()
+
+    def __getitem__(self, key):
+        try:
+            return super().__getitem__(key)
+        except KeyError:
+            error(f'There is no {self.name} named {key}', self.renderer)
+            sys.exit(1)
+
+
+class Renderer:
+    def __init__(self, lines, out_path, percent_zoom, bg_color):
+        self.lines = lines
+        self.gfx = SvgBuilder(out_path, percent_zoom, bg_color)
+
+    def run(self):
+        self.init(0)
+        self.run_layer()
+        #print('>>>>>', self.ypos)
+
+        self.init(1)
+        self.run_layer()
+
+        self.init(2)
+        self.run_layer()
+
+        self.gfx.save()
+
+    def init(self, layer_nr):
+        self.last_cmd = None
+        self.objects_dic = CheckedOrderedDict('object', self)
+        self.dead_objects_dic = CheckedOrderedDict('object', self)
+        self.activity_dic = CheckedOrderedDict('object', self)
+        self.ypos = C.STEP_NORMAL
+        self.activity_boxes = []
+        self.activity_row = 0
+        self.layer_nr = layer_nr
+        self.comment_dic = CheckedOrderedDict('comment', self)
+        self.frame_dic = CheckedOrderedDict('frame', self)
+        self.line_nr = 0
+        self.line = None
+        self.x_max = 0
+        self.y_max = 0
+
+    def set_max(self, x, y):
+        self.x_max = max(self.x_max, x)
+        self.y_max = max(self.y_max, y)
+
+    def get_x(self, obj, center=False, activity=False):
+        x = obj.index * (C.COLUMN_WIDTH + C.COLUMN_SPACING)
+        if center:
+            x += C.COLUMN_WIDTH / 2
+        if activity:
+            x += self.nb_active(obj.name) * C.ACTIVITY_WIDTH/2
+        return x
+
+    def nb_active(self, name):
+        return len(self.activity_dic.get(name, []))
+
+    def compute_object_index(self):
+        if not self.objects_dic:
+            index = 0
+        else:
+            index = None
+            indices = [o.index for o in self.objects_dic.values()]
+            for i in range(len(self.objects_dic)):
+                if i not in indices:
+                    index = i
+                    break
+            if index is None:
+                index = max(indices) + 1
+        return index
+
+    def handle_trace(self, cmd, args):
+        if cmd != 'trace': return
+        self.line_nr, self.line = args
+
+    def handle_object(self, cmd, args):
+        olike = ('object', 'pobject', 'actor')
+        if cmd in olike:
+            # create objects
+            if cmd in ('object', 'actor'):
+                name, label = args
+            else:
+                name, = args
+                label = None
+
+            if name in self.objects_dic:
+                index = self.objects_dic[name].index
+            else:
+                index = self.compute_object_index()
+
+
+            ypos = self.ypos
+            if cmd == 'actor': ypos += C.ACTOR_DESCENT
+            self.objects_dic[name] = Object(cmd, index, name, label,
+                                            ypos, self.activity_row)
+            self.activity_dic[name] = []
+        elif self.last_cmd in olike:
+            if self.layer_nr == 1:
+                # draw objects
+                for o in self.objects_dic.values():
+                    if o.type == 'pobject':
+                        continue
+                    if self.activity_row != o.row:
+                        continue
+                    if o.type == 'actor':
+                        x, y = self.get_x(o, True), self.ypos - C.ACTOR_ASCENT
+                        self.gfx.actor(x, y)
+                        x, y = self.get_x(o, True), self.ypos + C.ACTOR_LABEL_Y
+                        self.gfx.text(x, y, o.label, middle=True)
+                    else:  # regular object
+                        x, y = self.get_x(o), self.ypos
+                        self.gfx.rect(x, y, C.COLUMN_WIDTH, C.OBJECT_HEIGHT)
+                        x, y = self.get_x(o, True), self.ypos + C.OBJECT_LABEL_Y
+                        self.gfx.text(x, y, o.label, middle=True, underline=True)
+            self.ypos += C.OBJECT_STEP
+            self.activity_row += 1
+
+    def handle_pobject(self, cmd, args):
+        return
+
+    def handle_actor(self, cmd, args):
+        return
+
+    def handle_oconstraint(self, cmd, args):
+        if cmd != 'oconstraint': return
+        name, text = args
+        o = self.objects_dic[name]
+        x, y = self.get_x(o), o.ypos - C.TEXT_MARGIN_Y
+        if self.layer_nr == 1:
+            self.gfx.text(x, y, text)
+
+    def handle_lconstraint(self, cmd, args):
+        if cmd != 'lconstraint': return
+        name, text = args
+        o = self.objects_dic[name]
+        x = self.get_x(o, True, True)  + C.TEXT_MARGIN_X
+        y = self.ypos - C.TEXT_MARGIN_Y
+        if self.layer_nr == 1:
+            self.gfx.text(x, y, text)
+        self.ypos += C.STEP_SMALL
+
+    def handle_lconstraint_below(self, cmd, args):
+        if cmd != 'lconstraint_below': return
+        name, text = args
+        o = self.objects_dic[name]
+        x = self.get_x(o, True, True) + C.TEXT_MARGIN_X
+        y = self.ypos - C.TEXT_MARGIN_Y + C.STEP_SMALL
+        if self.layer_nr == 1:
+            self.gfx.text(x, y, text)
+
+    def handle_active(self, cmd, args):
+        if cmd == 'active':
+            name, = args
+            self.activity_dic[name].append(self.ypos)
+
+    def handle_inactive(self, cmd, args):
+        if cmd == 'inactive':
+            name, = args
+            self.inactivate(name)
+
+    def handle_message(self, cmd, args):
+        if cmd != 'message': return
+        src, dst, txt, asynch, align = args
+        self._handle_message(src, dst, txt, False, asynch, align=align)
+
+    def handle_cmessage(self, cmd, args):
+        if cmd != 'cmessage': return
+        src, dst, label, message, asynch = args
+        self.ypos += C.STEP_NORMAL
+        save1_y = self.ypos
+        self.handle_object('object', (dst, label))  # create
+        self.last_cmd = 'object'
+
+        self.handle_object('', None)  # draw
+        save2_y = self.ypos
+        self.ypos = save1_y - C.OBJECT_STEP/2
+        text = message or "«create»"
+        self._handle_message(src, dst, text, True, True,
+                             shorten=C.COLUMN_WIDTH/2)
+        self.ypos = save2_y
+
+    def handle_dmessage(self, cmd, args):
+        if cmd != 'dmessage': return
+        dst, src = args
+        text = "«destroy»"
+        self._handle_message(src, dst, text, True, True)
+        o = self.objects_dic[dst]
+        x = self.get_x(o, True)
+        if self.layer_nr == 2:
+            self.gfx.cross(x, self.ypos, C.CROSS_SIZE)
+
+        self.handle_complete('complete', [dst])
+
+    def handle_rmessage(self, cmd, args):
+        if cmd != 'rmessage': return
+        src, dst, txt, asynch = args
+        self._handle_message(dst, src, txt, True, True)
+
+    def _handle_message(self, src, dst, txt, dashed, asynch,
+                        shorten=0, align=''):
+        self.ypos += C.STEP_NORMAL
+        o1 = self.objects_dic[src]
+        o2 = self.objects_dic[dst]
+        inv = o1.index >= o2.index
+        if inv:
+            o1, o2 = o2, o1
+            shorten = -shorten
+
+        if src == dst:
+            if txt:
+                x = self.get_x(o1, True, True) + C.TEXT_MARGIN_X
+                y = self.ypos
+                if self.layer_nr == 2:
+                    self.gfx.text(x, y, txt)
+
+            sgn = 1
+            x0 = self.get_x(o1, True, True)
+            xa = x0 + C.MESSAGE_SPACING
+            xb = x0 + C.COLUMN_WIDTH / 2
+            x1 = x0 + C.MESSAGE_SPACING
+            step = C.STEP_NORMAL
+            xtext = x0 + C.TEXT_MARGIN_Y
+
+            if self.layer_nr == 2:
+                # "U" line
+                points = [
+                    (xa, self.ypos + C.TEXT_MARGIN_Y),
+                    (xb, self.ypos + C.TEXT_MARGIN_Y),
+                    (xb, self.ypos + step),
+                    (x1, self.ypos + step),
+                ]
+                self.gfx.polyline(points)
+            self.ypos += step
+        else:
+            if txt:
+                start = middle = end = False
+                if align == '(':
+                    x = self.get_x(o1, True, True) + C.TEXT_MARGIN_X
+                    start = True
+                elif align == ')':
+                    x = self.get_x(o2, True) - C.TEXT_MARGIN_Y - shorten
+                    end = True
+                else:
+                    x = (self.get_x(o1, True) + self.get_x(o2, True) - shorten)/2
+                    middle = True
+                y = self.ypos
+                if self.layer_nr == 2:
+                    self.gfx.text(x, y, txt,
+                                  start=start, middle=middle, end=end)
+                self.ypos += C.TEXT_MARGIN_Y
+
+            x1 = self.get_x(o1, True, True) + C.MESSAGE_SPACING
+            x2 = self.get_x(o2, True) - shorten - C.MESSAGE_SPACING
+            x2 -= C.ACTIVITY_WIDTH / 2 if self.nb_active(o2.name) else 0
+
+            # head line
+            if inv: x1 += C.MESSAGE_SPACING
+            else: x2 -= C.MESSAGE_SPACING
+            if self.layer_nr == 2:
+                self.gfx.line(x1, self.ypos, x2, self.ypos, dashed=dashed)
+            if inv: x1 -= C.MESSAGE_SPACING
+            else: x2 += C.MESSAGE_SPACING
+
+        # arrow head
+        if self.layer_nr == 2:
+            self.gfx.arrow_head(x1 if inv else x2, self.ypos,
+                                C.ARROW_HEAD_SIZE, not asynch, inv)
+
+    def handle_step(self, cmd, args):
+        if cmd != 'step': return
+        self.ypos += C.STEP_NORMAL
+
+    def handle_blip(self, cmd, args):
+        if cmd != 'blip': return
+        name, = args
+        self.handle_active('active', [name])
+        self.ypos += C.STEP_NORMAL
+        self.handle_inactive('inactive', [name])
+
+    def handle_comment(self, cmd, args):
+        if cmd != 'comment': return
+        name, meta, text = args
+
+        comment_name, pos, size = (meta + ',,').split(',')[:3]
+        #,down .2 right .25,wid 2.02 ht 0.26
+        pos_terms = RX_COMMENT_POS.findall(pos)
+        o = self.objects_dic[name]
+        height = len(text.split('\n')) * C.TEXT_HEIGHT + C.TEXT_MARGIN_Y
+        x1, y1 = self.get_x(o, True), self.ypos
+        x2, y2 = x1, y1 - height/2
+        x2offset = C.COLUMN_WIDTH / 2
+        for key, value in pos_terms:
+            value = float(value) * C.SIZINGS_FACTOR
+            if key == 'down':
+                y2 += value
+            elif key == 'up':
+                y2 -= value
+            elif key == 'left':
+                x2offset -= value
+            elif key == 'right':
+                x2offset = value
+        x2 += x2offset
+        y3 = y2 + height/2
+        if comment_name:
+            self.comment_dic[comment_name] = Comment(x2, y3)
+
+        if self.layer_nr == 2:
+            lines = text.split('\n')
+            length = max([self.gfx.get_text_width(l) for l in lines])
+            width = length + C.TEXT_MARGIN_X + C.TEXT_DOGEAR
+            self.gfx.comment_box(x2, y2, width, height, C.TEXT_DOGEAR)
+
+            dx = C.TEXT_MARGIN_X
+            dy = C.TEXT_HEIGHT
+            for line in lines:
+                self.gfx.text(x2+dx, y2+dy, line, light=True)
+                dy += C.TEXT_HEIGHT
+            self.gfx.line(x1, y1, x2, y2+height/2, grey=True, dotted=True)
+    def handle_connect_to_comment(self, cmd, args):
+        if cmd != 'connect_to_comment': return
+        src, dst = args
+        o = self.objects_dic[src]
+        c = self.comment_dic[dst]
+        x1, y1 = self.get_x(o, True), self.ypos
+        x2, y2 = c.xport, c.yport
+        self.gfx.line(x1, y1, x2, y2, grey=True, dotted=True)
+
+    def handle_begin_frame(self, cmd, args):
+        if cmd != 'begin_frame': return
+        src, fname, label = args
+        self.ypos += C.STEP_NORMAL
+        o = self.objects_dic[src]
+        x = self.get_x(o, True) - C.COLUMN_WIDTH/4
+        y = self.ypos
+        self.frame_dic[fname] = Frame(x, y, label)
+        self.ypos += C.STEP_NORMAL
+
+    def handle_end_frame(self, cmd, args):
+        if cmd != 'end_frame': return
+        fname, dst = args
+        o = self.objects_dic.get(dst) or self.dead_objects_dic.get(dst)
+        frame = self.frame_dic[fname]
+        x, y = frame.xpos, frame.ypos
+        w, h = self.get_x(o, True) + C.COLUMN_WIDTH/4 - x, self.ypos - y
+        if self.layer_nr == 2:
+            self.gfx.rect(x, y, w, h, transparent=True, grey=True)
+            d = C.TEXT_DOGEAR
+            width = self.gfx.get_text_width(frame.label) + C.TEXT_MARGIN_X*2 + d
+            height = C.TEXT_HEIGHT + C.TEXT_MARGIN_Y
+            self.gfx.frame_label_box(x, y, width, height, d)
+
+            dx = C.TEXT_MARGIN_X
+            dy = C.TEXT_HEIGHT
+            self.gfx.text(x+dx, y+dy, frame.label, light=True)
+        #self.ypos += C.STEP_SMALL
+
+    def handle_delete(self, cmd, args):
+        if cmd != 'delete': return
+        name, = args
+        o = self.objects_dic[name]
+        x = self.get_x(o, True)
+        if self.layer_nr == 2:
+            self.gfx.cross(x, self.ypos + C.CROSS_SIZE/2, C.CROSS_SIZE)
+        self.handle_complete('complete', [name])
+
+    def handle_complete(self, cmd, args):
+        if cmd == 'complete':
+            name, = args
+            stack = self.activity_dic[name]
+            # inactivate all levels
+            for i in range(len(stack)):
+                self.inactivate(name)
+            # draw timeline
+            o = self.objects_dic[name]
+            if o.label is not None:
+                x = self.get_x(o, True)
+                y1 = o.ypos + C.STEP_NORMAL
+                y2 = self.ypos + .1
+                if self.layer_nr == 1:
+                    self.gfx.line(x, y1, x, y2,dashed=True)
+            self.dead_objects_dic[name] = self.objects_dic[name]
+            del self.objects_dic[name]
+
+        elif self.last_cmd == 'complete':
+            self.ypos += C.STEP_NORMAL
+
+    def run_layer(self):
+        for line in self.lines:
+            cmd = line[0]
+            args = line[1:]
+
+            if cmd == '#####':
+                cmd = 'trace'
+                self.handle_trace(cmd, args)
+                continue
+
+            f = getattr(self, 'handle_' + cmd)  # check we have a handler
+            self.handle_object(cmd, args)
+            self.handle_active(cmd, args)
+            self.handle_inactive(cmd, args)
+            self.handle_message(cmd, args)
+            self.handle_cmessage(cmd, args)
+            self.handle_dmessage(cmd, args)
+            self.handle_rmessage(cmd, args)
+            self.handle_step(cmd, args)
+            self.handle_blip(cmd, args)
+            self.handle_oconstraint(cmd, args)
+            self.handle_lconstraint(cmd, args)
+            self.handle_lconstraint_below(cmd, args)
+            self.handle_comment(cmd, args)
+            self.handle_connect_to_comment(cmd, args)
+            self.handle_begin_frame(cmd, args)
+            self.handle_end_frame(cmd, args)
+            self.handle_complete(cmd, args)
+            self.handle_delete(cmd, args)
+
+            self.last_cmd = cmd
+
+        # close remaining activations
+        self.ypos += C.STEP_NORMAL/2
+        for name, stack in self.activity_dic.items():
+            for i in range(len(stack)):
+                self.inactivate(name)
+
+        # complete remaining objects
+        names = list(self.objects_dic.keys())
+        for name in names:
+            o = self.objects_dic[name]
+            self.handle_complete('complete', [name])
+
+        # draw activations in reverse order
+        self.activity_boxes.reverse()
+        if self.layer_nr == 1:
+            for x, y, w, h in self.activity_boxes:
+                self.gfx.rect(x, y, w, h)
+
+    def inactivate(self, name):
+        o = self.objects_dic[name]
+        x = self.get_x(o, True) + self.nb_active(name)*C.ACTIVITY_WIDTH/2 - C.ACTIVITY_WIDTH
+        if not len(self.activity_dic[name]):
+            error(f'Cannot inactivate {name} because it is not active', self)
+        y = self.activity_dic[name][-1]
+        w, h = C.ACTIVITY_WIDTH, (self.ypos-self.activity_dic[name][-1])
+        self.activity_boxes.append((x, y, w, h))
+        self.activity_dic[name].pop()

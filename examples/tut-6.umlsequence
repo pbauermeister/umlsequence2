@@ -1,0 +1,12 @@
+C : c:Client
+T : #:Transaction
+P : p:ODBCProxy
+
+C+
+C  :> T Transaction
+{{Transient}}
+C  -> T+ setActions (a,d,o)
+T  -> P! setValues (d,3.4)
+T  -> P! setValues (a,"CO")
+C  <= T- committed
+C- #> T
