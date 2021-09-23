@@ -1,6 +1,0 @@
-S : s:Switch
-P : p:Pump
-
-S+ P+
-S -> P run()
-S -> P stop()

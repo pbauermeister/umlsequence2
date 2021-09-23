@@ -1,7 +1,0 @@
-A * Actor
-T : :OTaker
-F : :OFulfill
-
-A  -> T <)>submitOrder
-T  -> F <(>placeOrder
-A  <- F acknowledgeOrder
