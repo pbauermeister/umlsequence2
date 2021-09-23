@@ -77,7 +77,7 @@ def main():
     parser.add_argument('--markdown', '-m',
                         action='store_true',
                         help="consider snippets between opening marker: "
-                        "```umlsequence OUTFILE, and closing marker: '''");
+                        "```umlsequence OUTFILE, and closing marker: ```");
 
     parser.add_argument('--format', '-f',
                         required=False,

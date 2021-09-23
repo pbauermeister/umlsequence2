@@ -87,7 +87,7 @@ optional arguments:
                         use INPUT_FILE base name with '.svg' extension, or
                         stdout
   --markdown, -m        consider snippets between opening marker:
-                        ```umlsequence OUTFILE, and closing marker: '''
+                        ```umlsequence OUTFILE, and closing marker: ```
   --format FORMAT, -f FORMAT
                         output format: any supported by ImageMagick; default
                         is ps
