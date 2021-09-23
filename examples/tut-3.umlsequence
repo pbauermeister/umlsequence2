@@ -1,9 +1,0 @@
-S : s:Switch
-P : p:Pump
-F :
-
-S+ P+
-S  -> P  run()
-P  :> F+ f:Flow
-S  -> P  stop()
-P  #> F

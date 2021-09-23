@@ -23,7 +23,9 @@ See README.md for more information.
 """
 
 import argparse
+import io
 import os
+import re
 import sys
 import tempfile
 
@@ -70,6 +72,11 @@ def main():
                         "if omitted, use INPUT_FILE base name with '.svg' "
                         "extension, or stdout")
 
+    parser.add_argument('--markdown', '-m',
+                        action='store_true',
+                        help="consider snippets between opening marker: "
+                        "```umlsequence OUTFILE, and closing marker: '''");
+
     parser.add_argument('--format', '-f',
                         required=False,
                         default="svg",
@@ -101,6 +108,21 @@ def main():
         inp = sys.stdin
     else:
         inp = open(args.INPUT_FILE)
+
+
+    # markdown
+    if args.markdown:
+        rx = re.compile(r"^```\s*umlsequence\s+(?P<output>.*?)\s*"
+                        r"^(?P<src>.*?)^\s*```", re.DOTALL | re.M
+        )
+        md = inp.read()
+        for snippet in rx.finditer(md):
+            inp = io.StringIO(snippet['src'])
+            name = snippet['output']
+            run(inp, name, args.percent_zoom, args.debug, args.background_color,
+                args.format)
+            print(f'{sys.argv[0]}: generated {name}', file=sys.stderr)
+        sys.exit(0)
 
     # treat output
     if args.output_file is None:
