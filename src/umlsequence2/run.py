@@ -54,11 +54,13 @@ def run(input_fp, output_path, percent_zoom, debug, bgcolor, format):
 def main():
     parser = argparse.ArgumentParser(
         description=("UML sequence command-line utility, version 2. "
-                      "(C) Copyright 2021 by Pascal Bauermeister. "
-                      "Converts a textual UML sequence description into "
-                      "an SVG drawing. "
-                      "See http://moinmo.in/ParserMarket/UmlSequence/Examples "
-                      "for syntax description and examples."))
+                     "(C) Copyright 2021 by Pascal Bauermeister. "
+                     "Converts a textual UML sequence description into "
+                     "a graphic file. "
+                     "See https://github.com/pbauermeister/umlsequence2/"
+                     "tree/master/examples"
+                     #" for syntax description and examples."
+                     " for examples."))
 
     parser.add_argument('INPUT_FILE',
                         action="store",

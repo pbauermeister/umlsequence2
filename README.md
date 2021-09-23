@@ -6,10 +6,10 @@ diagrams as images in various formats (SVG, PNG, JPG, PDF, etc.) from
 source text files.
 
 This is a pure-Python rewrite of the
-https://github.com/pbauermeister/umlsequence project which was based
-on umlgraph.
+https://github.com/pbauermeister/umlsequence project, which was itself
+based on umlgraph by Diomidis Spinellis.
 
-Source text files are the so-called "umlsequence" syntax.
+Source text files are in the so-called "umlsequence" syntax.
 
 Umlsequence syntax example:
 
@@ -36,12 +36,17 @@ Umlsequence syntax example:
     # deactivation
     T- O-
 
-![example](https://raw.githubusercontent.com/pbauermeister/umlsequence2/master/examples/tut-4.svg "Example")
+![example](https://raw.githubusercontent.com/pbauermeister/umlsequence2/master/examples/example-04.svg "Example")
 
-Syntax and Examples
--------------------
+Syntax
+------
 
-See http://moinmo.in/ParserMarket/UmlSequence/Examples.
+Coming soon.
+
+Examples
+--------
+
+See https://github.com/pbauermeister/umlsequence2/tree/master/examples
 
 Dependencies
 ------------
@@ -61,32 +66,38 @@ Usage
 
 `umlsequence2 -h` says:
 
-    usage: umlsequence2 [-h] [--output-file OUTPUT_FILE] [--format FORMAT]
-                        [--percent-zoom PERCENT_ZOOM]
-                        [--background-color BACKGROUND_COLOR] [--debug]
-                        [INPUT_FILE]
-    
-    UML sequence command-line utility, version 2. (C) Copyright 2021 by Pascal
-    Bauermeister. Converts a textual UML sequence description into an SVG drawing.
-    See http://moinmo.in/ParserMarket/UmlSequence/Examples for syntax description
-    and examples.
-    
-    positional arguments:
-      INPUT_FILE            UML sequence input file; if omitted, stdin is used
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --output-file OUTPUT_FILE, -o OUTPUT_FILE
-                            output file name; pass '-' to use stdout; if omitted,
-                            use INPUT_FILE base name with '.svg' extension, or
-                            stdout
-      --format FORMAT, -f FORMAT
-                            output format: any supported by ImageMagick; default
-                            is ps
-      --percent-zoom PERCENT_ZOOM, -p PERCENT_ZOOM
-                            magnification percentage; default is 100
-      --background-color BACKGROUND_COLOR, -b BACKGROUND_COLOR
-                            background color name (including 'none' for transparent) in web color notation; see
-                            https://developer.mozilla.org/en-US/docs/Web/CSS/color_value for a list of valid names;
-                            default is white
-      --debug               emits debug messages
+```
+usage: umlsequence2 [-h] [--output-file OUTPUT_FILE] [--markdown]
+                    [--format FORMAT] [--percent-zoom PERCENT_ZOOM]
+                    [--background-color BACKGROUND_COLOR] [--debug]
+                    [INPUT_FILE]
+
+UML sequence command-line utility, version 2. (C) Copyright 2021 by Pascal
+Bauermeister. Converts a textual UML sequence description into a graphic
+file. See https://github.com/pbauermeister/umlsequence2/tree/master/examples
+for examples.
+
+positional arguments:
+  INPUT_FILE            UML sequence input file; if omitted, stdin is used
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --output-file OUTPUT_FILE, -o OUTPUT_FILE
+                        output file name; pass '-' to use stdout; if omitted,
+                        use INPUT_FILE base name with '.svg' extension, or
+                        stdout
+  --markdown, -m        consider snippets between opening marker:
+                        ```umlsequence OUTFILE, and closing marker: '''
+  --format FORMAT, -f FORMAT
+                        output format: any supported by ImageMagick; default
+                        is ps
+  --percent-zoom PERCENT_ZOOM, -p PERCENT_ZOOM
+                        magnification percentage; default is 100
+  --background-color BACKGROUND_COLOR, -b BACKGROUND_COLOR
+                        background color name (including 'none' for
+                        transparent) in web color notation; see
+                        https://developer.mozilla.org/en-
+                        US/docs/Web/CSS/color_value for a list of valid
+                        names; default is white
+  --debug               emits debug messages
+```
