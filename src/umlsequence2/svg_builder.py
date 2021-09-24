@@ -77,19 +77,20 @@ class SvgBuilder:
     def text(self, x, y, text, underline=False,
              start=False, middle=False, end=False,
              light=False):
+        xp, yp = cm2px(x), cm2px(y)
         a = dict(fill='#444' if light else 'black',
-                 insert=(cm2px(x), cm2px(y)),
+                 insert=(xp, yp),
                  **CONFIG.TEXT_FONT)
-        l = self.get_text_width(text)
-        if start:
+        l = cm2px(self.get_text_width(text))
+        if start or not start and not middle and not end:
             a['text_anchor'] = 'start'
-            self.set_max(x + l, y)
+            self.set_max(xp + l, yp)
         if middle:
             a['text_anchor'] = 'middle'
-            self.set_max(x + l/2, y)
+            self.set_max(xp + l/2, yp)
         if end:
             a['text_anchor'] = 'end'
-            self.set_max(x, y)
+            self.set_max(xp, yp)
         if underline:
             a['text_decoration'] = 'underline'
         self.add(self.dwg.text(text, **a))
