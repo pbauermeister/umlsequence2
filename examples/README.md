@@ -1,6 +1,6 @@
 # Umlsequence Examples
 
-All diagrams in this directory were creating by running:
+All diagrams in this directory were created by running:
 ```
 umlsequence2 README.md -m
 ```
