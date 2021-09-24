@@ -41,12 +41,12 @@ Umlsequence syntax example:
 Syntax
 ------
 
-See https://github.com/pbauermeister/umlsequence2/tree/master/doc.
+See https://github.com/pbauermeister/umlsequence2/tree/master/doc/README.md.
 
 Examples
 --------
 
-See https://github.com/pbauermeister/umlsequence2/tree/master/examples.
+See https://github.com/pbauermeister/umlsequence2/tree/master/examples/README.md.
 
 Dependencies
 ------------
