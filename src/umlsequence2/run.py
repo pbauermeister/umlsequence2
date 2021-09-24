@@ -1,22 +1,15 @@
 #!/usr/bin/env python3
 
-"""
-Command-line UML sequence diagram generator.
-
--------------------------------------------------------------------------------
-
-Copyright (C) 2012-2021 by Pascal Bauermeister <pascal.bauermeister@gmail.com>
-
-This module is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2, or (at your option)
-any later version.
-
--------------------------------------------------------------------------------
-
+"""Command-line UML sequence diagram generator (version 2).
+Converts a textual UML sequence description into a graphic file.
+-----
+See https://github.com/pbauermeister/umlsequence2/ for information,
+syntax and examples.
+-----
+(C) Copyright 2021 by Pascal Bauermeister.
+-----
 Usage:
   umlsequence2 -h                 print help for options
-
   umlsequence2 FILE.umlsequence   generates FILE.svg
 
 See README.md for more information.
@@ -29,8 +22,8 @@ import re
 import sys
 import tempfile
 
-from . import generate_svg
-from .convert import convert
+from umlsequence2 import generate_svg
+from umlsequence2.convert import convert
 
 def run(input_fp, output_path, percent_zoom, debug, bgcolor, format):
     if debug:
@@ -52,15 +45,10 @@ def run(input_fp, output_path, percent_zoom, debug, bgcolor, format):
 
 
 def main():
+    parts = [each.strip() for each in __doc__.split('-----')]
     parser = argparse.ArgumentParser(
-        description=("UML sequence command-line utility, version 2. "
-                     "(C) Copyright 2021 by Pascal Bauermeister. "
-                     "Converts a textual UML sequence description into "
-                     "a graphic file. "
-                     "See https://github.com/pbauermeister/umlsequence2/"
-                     "tree/master/examples"
-                     #" for syntax description and examples."
-                     " for examples."))
+        description=parts[0],
+        epilog=parts[1])
 
     parser.add_argument('INPUT_FILE',
                         action="store",

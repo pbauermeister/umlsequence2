@@ -1,9 +1,9 @@
 # Umlsequence Examples
 
 All diagrams in this directory were created by running:
-```
-umlsequence2 README.md -m
-```
+`umlsequence2 README.md -m`.
+
+See also [the syntax](../doc/README.md).
 
 ## 01 - Defining a Simple Sequence Diagram
 ```umlsequence example-01.svg
