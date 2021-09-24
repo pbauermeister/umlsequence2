@@ -29,8 +29,8 @@ import re
 import sys
 import tempfile
 
-from umlsequence2 import generate_svg
-from umlsequence2.convert import convert
+from . import generate_svg
+from .convert import convert
 
 def run(input_fp, output_path, percent_zoom, debug, bgcolor, format):
     if debug:
@@ -121,6 +121,7 @@ def main():
         for snippet in rx.finditer(md):
             inp = io.StringIO(snippet['src'])
             name = snippet['output']
+            inp.name = name
             run(inp, name, args.percent_zoom, args.debug, args.background_color,
                 args.format)
             print(f'{sys.argv[0]}: generated {name}', file=sys.stderr)
