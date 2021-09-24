@@ -30,7 +30,7 @@ class CheckedOrderedDict(OrderedDict):
         try:
             return super().__getitem__(key)
         except KeyError:
-            error(f'There is no {self.name} named {key}', self.renderer)
+            error(f'There is no {self.name} named "{key}"', self.renderer)
             sys.exit(1)
 
 
@@ -156,6 +156,7 @@ class Renderer:
         x, y = self.get_x(o), o.ypos - C.TEXT_MARGIN_Y
         if self.layer_nr == 1:
             self.gfx.text(x, y, text)
+        return True
 
     def handle_lconstraint(self, cmd, args):
         if cmd != 'lconstraint': return
@@ -336,6 +337,8 @@ class Renderer:
             lines = text.split('\n')
             length = max([self.gfx.get_text_width(l) for l in lines])
             width = length + C.TEXT_MARGIN_X + C.TEXT_DOGEAR
+
+            self.gfx.line(x1, y1, x2, y2+height/2, grey=True, dotted=True)
             self.gfx.comment_box(x2, y2, width, height, C.TEXT_DOGEAR)
 
             dx = C.TEXT_MARGIN_X
@@ -343,7 +346,6 @@ class Renderer:
             for line in lines:
                 self.gfx.text(x2+dx, y2+dy, line, light=True)
                 dy += C.TEXT_HEIGHT
-            self.gfx.line(x1, y1, x2, y2+height/2, grey=True, dotted=True)
     def handle_connect_to_comment(self, cmd, args):
         if cmd != 'connect_to_comment': return
         src, dst = args
@@ -358,7 +360,7 @@ class Renderer:
         src, fname, label = args
         self.ypos += C.STEP_NORMAL
         o = self.objects_dic[src]
-        x = self.get_x(o, True) - C.COLUMN_WIDTH/4
+        x = self.get_x(o)
         y = self.ypos
         self.frame_dic[fname] = Frame(x, y, label)
         self.ypos += C.STEP_NORMAL
@@ -369,7 +371,7 @@ class Renderer:
         o = self.objects_dic.get(dst) or self.dead_objects_dic.get(dst)
         frame = self.frame_dic[fname]
         x, y = frame.xpos, frame.ypos
-        w, h = self.get_x(o, True) + C.COLUMN_WIDTH/4 - x, self.ypos - y
+        w, h = self.get_x(o) + C.COLUMN_WIDTH - x, self.ypos - y
         if self.layer_nr == 2:
             self.gfx.rect(x, y, w, h, transparent=True, grey=True)
             d = C.TEXT_DOGEAR
@@ -423,6 +425,9 @@ class Renderer:
                 continue
 
             f = getattr(self, 'handle_' + cmd)  # check we have a handler
+
+            if self.handle_oconstraint(cmd, args):
+                continue
             self.handle_object(cmd, args)
             self.handle_active(cmd, args)
             self.handle_inactive(cmd, args)
@@ -432,7 +437,6 @@ class Renderer:
             self.handle_rmessage(cmd, args)
             self.handle_step(cmd, args)
             self.handle_blip(cmd, args)
-            self.handle_oconstraint(cmd, args)
             self.handle_lconstraint(cmd, args)
             self.handle_lconstraint_below(cmd, args)
             self.handle_comment(cmd, args)
