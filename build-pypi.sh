@@ -7,7 +7,7 @@
 #   https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
 #
 # Getting a token:
-#   https://test.pypi.org/manage/account/token/
+#   https://pypi.org/manage/account/token/
 
 set -ex
 
