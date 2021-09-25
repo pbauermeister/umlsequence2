@@ -402,7 +402,7 @@ class Renderer:
             # inactivate all levels
             for i in range(len(stack)):
                 self.inactivate(name)
-            # draw timeline
+            # draw lifeline
             o = self.objects_dic[name]
             if o.label is not None:
                 x = self.get_x(o, True)
