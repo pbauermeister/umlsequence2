@@ -393,6 +393,7 @@ class Renderer:
         if self.layer_nr == 2:
             self.gfx.cross(x, self.ypos + C.CROSS_SIZE/2, C.CROSS_SIZE)
         self.handle_complete('complete', [name])
+        self.ypos += C.STEP_NORMAL
 
     def handle_complete(self, cmd, args):
         if cmd == 'complete':
@@ -415,39 +416,45 @@ class Renderer:
         elif self.last_cmd == 'complete':
             self.ypos += C.STEP_NORMAL
 
+    def handle_cmd(self, cmd, args):
+        if cmd == '#####':
+            cmd = 'trace'
+            self.handle_trace(cmd, args)
+            return
+
+        if cmd:
+            f = getattr(self, 'handle_' + cmd)  # check we have a handler
+
+        if self.handle_oconstraint(cmd, args):
+            return
+        self.handle_object(cmd, args)
+        self.handle_active(cmd, args)
+        self.handle_inactive(cmd, args)
+        self.handle_message(cmd, args)
+        self.handle_cmessage(cmd, args)
+        self.handle_dmessage(cmd, args)
+        self.handle_rmessage(cmd, args)
+        self.handle_step(cmd, args)
+        self.handle_blip(cmd, args)
+        self.handle_lconstraint(cmd, args)
+        self.handle_lconstraint_below(cmd, args)
+        self.handle_comment(cmd, args)
+        self.handle_connect_to_comment(cmd, args)
+        self.handle_begin_frame(cmd, args)
+        self.handle_end_frame(cmd, args)
+        self.handle_complete(cmd, args)
+        self.handle_delete(cmd, args)
+
+        self.last_cmd = cmd
+
     def run_layer(self):
         for line in self.lines:
             cmd = line[0]
             args = line[1:]
+            self.handle_cmd(cmd, args)
 
-            if cmd == '#####':
-                cmd = 'trace'
-                self.handle_trace(cmd, args)
-                continue
-
-            f = getattr(self, 'handle_' + cmd)  # check we have a handler
-
-            if self.handle_oconstraint(cmd, args):
-                continue
-            self.handle_object(cmd, args)
-            self.handle_active(cmd, args)
-            self.handle_inactive(cmd, args)
-            self.handle_message(cmd, args)
-            self.handle_cmessage(cmd, args)
-            self.handle_dmessage(cmd, args)
-            self.handle_rmessage(cmd, args)
-            self.handle_step(cmd, args)
-            self.handle_blip(cmd, args)
-            self.handle_lconstraint(cmd, args)
-            self.handle_lconstraint_below(cmd, args)
-            self.handle_comment(cmd, args)
-            self.handle_connect_to_comment(cmd, args)
-            self.handle_begin_frame(cmd, args)
-            self.handle_end_frame(cmd, args)
-            self.handle_complete(cmd, args)
-            self.handle_delete(cmd, args)
-
-            self.last_cmd = cmd
+        # some commands are rendered on command change, so have a fake cmd
+        self.handle_cmd(None, None)
 
         # close remaining activations
         self.ypos += C.STEP_NORMAL/2
@@ -473,6 +480,10 @@ class Renderer:
         if not len(self.activity_dic[name]):
             error(f'Cannot inactivate {name} because it is not active', self)
         y = self.activity_dic[name][-1]
-        w, h = C.ACTIVITY_WIDTH, (self.ypos-self.activity_dic[name][-1])
+        w = C.ACTIVITY_WIDTH
+        h = self.ypos-self.activity_dic[name][-1]
+        if h == 0:
+            self.ypos += C.STEP_NORMAL
+            h = self.ypos-self.activity_dic[name][-1]
         self.activity_boxes.append((x, y, w, h))
         self.activity_dic[name].pop()
