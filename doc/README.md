@@ -65,9 +65,10 @@ U  <-------?  O1                async message
 ### 3.a. Basic activations
 
 - Use `ID+` and `ID-` to activate and deactivate an object.
-- Use `ID!` to activate an object briefly (blip).
+- Use `ID!` to activate an object just briefly (blip).
 - `ID+`, `ID-` and `ID!` may be declared on the same line.
-- The `+`, `-` and `!` do not advance the time.
+- The `+` and `-` do not advance the time, except if it would produce a
+  zero-height activation
 - To advance the time by one step, use `:`.
 
 ```umlsequence 03a.svg
@@ -75,7 +76,6 @@ O1 : Object 1
 O2 : Object 2
 
 O1+ O2+
-:
 O2- O1-
 ```
 ![Basic activation](./03a.svg)
@@ -102,6 +102,11 @@ O1+ -> O2!
 ![Activation with message](./03c.svg)
 
 ### 3.d. Incremental activation
+
+- Any object can be activated any number of times.
+- At the end of the diagram, all still active objects are
+  automatically deactivated.
+
 ```umlsequence 03d.svg
 O : Object
 
@@ -110,6 +115,8 @@ O+
 O+
 :
 O+
+:
+O-
 ```
 ![Incremental activation](./03d.svg)
 
@@ -126,18 +133,17 @@ O2 : Object 2
 
 # Terminate object 1
 O1#
-:
+
 
 # Create object 3 re-using column of object 1
-O3: Object 3
+O3 : Object 3
 
 # Destroy object 2
 O2~
-:
+
 
 # Create object 4 re-using column of object 2
-O4: Object 4
-:
+O4 : Object 4
 ```
 ![Termination and destruction](./04.svg)
 
@@ -171,7 +177,7 @@ Note: we double the `{}` so that the inner curly braces are displayed.
 O1 : Object 1
 {{Constraint on Object 1}}
 O2 : Object 2
-:
+
 O1 -> O2
 O2 {{Constraint}}
 O2 _{{Constraint below}}
@@ -191,7 +197,7 @@ O2 _{{Constraint below}}
 ```umlsequence 07a.svg
 O1 : Object 1
 O2 : Object 2
-:
+
 O1 -> O2 centered
 O1 -> O2 <(>left
 O1 -> O2 <)>right
