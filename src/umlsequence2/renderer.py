@@ -370,6 +370,7 @@ class Renderer:
         fname, dst = args
         o = self.objects_dic.get(dst) or self.dead_objects_dic.get(dst)
         frame = self.frame_dic[fname]
+        self.ypos += C.STEP_NORMAL
         x, y = frame.xpos, frame.ypos
         w, h = self.get_x(o) + C.COLUMN_WIDTH - x, self.ypos - y
         if self.layer_nr == 2:

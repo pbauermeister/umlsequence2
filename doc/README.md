@@ -307,7 +307,7 @@ Frame1 [ O1  My frame
 
 # Frame content:
 O1 => O2 return=request
-:
+
 O2 ] Frame1
 ```
 ![Request+return message](./09a.svg)
@@ -320,9 +320,7 @@ O3 : Object 2
 
 Frame1 [ O1  Frame 1
 Frame2 [ O2  Frame 2
-:
 O2 ] Frame1
-:
 O3 ] Frame2
 ```
 ![Request+return message](./09b.svg)
