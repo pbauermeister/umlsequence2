@@ -7,11 +7,12 @@ from .config import CONFIG as C
 from .svg_builder import SvgBuilder
 
 RX_COMMENT_POS = re.compile(r'\s*(\S+)\s+(\S+)')
+RX_FRAME_OPTS = re.compile(r'\s*(\S+)\s+(\S+)')
 
 
 Object  = namedtuple('object', 'type index name label ypos row')
 Comment = namedtuple('comment', 'x y width height')
-Frame   = namedtuple('frame', 'xpos ypos label')
+Frame   = namedtuple('frame', 'xpos ypos label out')
 
 
 def error(message, renderer):
@@ -38,6 +39,7 @@ class Renderer:
     def __init__(self, lines, out_path, percent_zoom, bg_color):
         self.lines = lines
         self.gfx = SvgBuilder(out_path, percent_zoom, bg_color)
+        self.warnings = set()
 
     def run(self):
         self.init(0)
@@ -81,7 +83,10 @@ class Renderer:
         return x
 
     def warn(self, cmd, args, warning):
-        print(f'WARNING: {warning}: {cmd} {args}', file=sys.stderr)
+        text = f'WARNING: {warning}: {cmd} {args}'
+        if text not in self.warnings:
+            self.warnings.add(text)
+            print(text, file=sys.stderr)
 
     def nb_active(self, name):
         return len(self.activity_dic.get(name, []))
@@ -313,10 +318,9 @@ class Renderer:
 
     def handle_comment(self, cmd, args):
         if cmd != 'comment': return
-        name, meta, text = args
-        comment_name, pos = meta
+        name, options, text = args
+        comment_name, pos = options
 
-        pos_terms = RX_COMMENT_POS.findall(pos)
         o = self.objects_dic[name]
         height = len(text.split('\n')) * C.TEXT_HEIGHT + C.TEXT_MARGIN_Y
         x1, y1 = self.get_x(o, True), self.ypos
@@ -327,6 +331,7 @@ class Renderer:
         length = max([self.gfx.get_text_width(l) for l in lines])
         width = length + C.TEXT_MARGIN_X + C.TEXT_DOGEAR
 
+        pos_terms = RX_COMMENT_POS.findall(pos)
         for key, value in pos_terms:
             value = float(value)
             if key == 'down':
@@ -340,7 +345,7 @@ class Renderer:
                 x2offset = value
             else:
                 self.warn(cmd, args,
-                          f'Unknown layout directive "{key} {value}"')
+                          f'Unknown layout option "{key} {value}"')
         x2 += x2offset
 
         comment = Comment(x2, y2, width, height)
@@ -384,12 +389,25 @@ class Renderer:
 
     def handle_begin_frame(self, cmd, args):
         if cmd != 'begin_frame': return
-        src, fname, label = args
+        src, fname, options, label = args
+        out = 0
+
+        if options and options[0]:
+            opt_terms = RX_FRAME_OPTS.findall(options[0])
+            for key, value in opt_terms:
+                value = float(value)
+                if key == 'in':
+                    out = -value
+                elif key == 'out':
+                    out = value
+                else:
+                    self.warn(cmd, args,
+                              f'Unknown option "{key} {value}"')
         self.ypos += C.STEP_NORMAL
         o = self.objects_dic[src]
         x = self.get_x(o)
         y = self.ypos
-        self.frame_dic[fname] = Frame(x, y, label)
+        self.frame_dic[fname] = Frame(x, y, label, out)
         self.ypos += C.STEP_NORMAL
 
     def handle_end_frame(self, cmd, args):
@@ -398,8 +416,13 @@ class Renderer:
         o = self.objects_dic.get(dst) or self.dead_objects_dic.get(dst)
         frame = self.frame_dic[fname]
         self.ypos += C.STEP_NORMAL
-        x, y = frame.xpos, frame.ypos
-        w, h = self.get_x(o) + C.COLUMN_WIDTH - x, self.ypos - y
+        x1, x2 = frame.xpos, self.get_x(o)
+        if x1 > x2: x1, x2 = x2, x1
+        x, y = x1, frame.ypos
+        w, h = x2 + C.COLUMN_WIDTH - x, self.ypos - y
+        if frame.out:
+            x -= frame.out
+            w += frame.out*2
         if self.layer_nr == 2:
             self.gfx.rect(x, y, w, h, transparent=True, grey=True)
             d = C.TEXT_DOGEAR

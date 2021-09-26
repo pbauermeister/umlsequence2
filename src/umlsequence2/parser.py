@@ -72,14 +72,14 @@ class Parser:
             nlines = len(texts)
             return text1, text2, nlines, maxlen
 
-        def parse_meta(text, nb_metas):
+        def parse_option(text, nb_options):
             if text.startswith("["):
                 opts, text = text[1:].split("]", 1)
-                metas = (opts + ","*nb_metas).split(",")[:nb_metas]
+                options = (opts + ","*nb_options).split(",")[:nb_options]
             else:
                 opts = ""
-            metas = (opts + ","*nb_metas).split(",")[:nb_metas]
-            return [s.strip() for s in metas], text.strip()
+            options = (opts + ","*nb_options).split(",")[:nb_options]
+            return [s.strip() for s in options], text.strip()
 
         def do_line(line_nr, line, level=0):
             if not line.strip():
@@ -243,7 +243,7 @@ class Parser:
 
                 elif op == "//":
                     r2 = (r + " " + edge).strip()
-                    opts, text = parse_meta(r2, 2)
+                    opts, text = parse_option(r2, 2)
                     if not text:
                         append(('connect_to_comment', l, opts[0]))
                     else:
@@ -266,7 +266,8 @@ class Parser:
                     if edge:
                         if op == "]":
                             r, l = l, r
-                        append(('begin_frame', r, l, edge))
+                        opts, text = parse_option(edge, 1)
+                        append(('begin_frame', r, l, opts, text))
                     else:
                         if op == "[":
                             r, l = l, r
