@@ -276,8 +276,8 @@ O1 : Object 1
 O2 : Object 2
 
 :
-O1 // [,down .6 right 1.75]comment 2
-O2 // [,up .1 left .3]comment 1
+O1 // [,up .2 right .7]comment 1
+O2 // [,down .6 left 1.7]comment 2
 :
 ```
 ![Request+return message](./08c.svg)
