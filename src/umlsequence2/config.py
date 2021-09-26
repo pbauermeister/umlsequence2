@@ -53,7 +53,7 @@ CONFIG = Config(
 
     OBJECT_HEIGHT   = 0.60,
     OBJECT_LABEL_Y  = 0.40,
-    OBJECT_STEP     = 0.60,
+    OBJECT_STEP     = 0.90,
 
     STEP_NORMAL     = 0.6,
     STEP_SMALL      = 0.3,
