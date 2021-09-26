@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import os.path
 import sys
-sys.path.append('src')
-sys.path.append('../src')
+
+home = os.path.split(sys.argv[0])[0]
+sys.path.append(os.path.join(home, 'src'))
 
 if __name__ == "__main__":
     from src.umlsequence2.run import main
