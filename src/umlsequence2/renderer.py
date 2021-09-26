@@ -349,7 +349,6 @@ class Renderer:
 
         if self.layer_nr == 2:
             self.gfx.comment_box(x2, y2, width, height, C.TEXT_DOGEAR)
-            #self.gfx.line(x1, y1, x2, y2+height/2, grey=True, dotted=True)
             self.make_comment_connector(x1, y1, comment)
 
             dx = C.TEXT_MARGIN_X
@@ -382,8 +381,6 @@ class Renderer:
         c = self.comment_dic[dst]
         x1, y1 = self.get_x(o, True), self.ypos
         self.make_comment_connector(x1, y1, c)
-        #x2, y2 = c.xport, c.yport
-        #self.gfx.line(x1, y1, x2, y2, grey=True, dotted=True)
 
     def handle_begin_frame(self, cmd, args):
         if cmd != 'begin_frame': return
