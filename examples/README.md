@@ -86,13 +86,11 @@ T-  ?:> TC+  a:TransCoord
 TC  ?:> TC1+ a1:TransCheck
 TC  ?:> TC2+ a2:TransCheck
 TC  <-? TC1  ok
-:
+
 TC  >all done ?
-:
 TC- TC1~
-:
+
 TC+ <-? TC2  ok
-:
 TC >all done ?
 TC2~
 T!  <-? TC-  beValid
@@ -199,7 +197,7 @@ D : #db:DB
 G+
 G  :>  D db:DB
 D!
-D  //[C1,down 1 right .25] waiting for \n condition \n dbMailbox
+D  //[C1,down 1 right 1] waiting for \n condition \n dbMailbox
 A  -> G  openBrowser
 G  ?-> D+ query()
 G  <-? D- result
@@ -212,7 +210,7 @@ A  ?-> G  Exit
 
 Frame [ G OnExit
 G- ?-> D+ shutdown()
-G  //[,down .2 right .25] wait for cond. dbShutdown
+G  //[,down .5 right .5] wait for cond. dbShutdown
 :
 D  // all queries preceeding the \n\
       shutdown in the mailbox \n\
@@ -221,9 +219,8 @@ D  // all queries preceeding the \n\
       be destroyed
 G+ <-? D- done
 G  #>  D
-:
 D  ] Frame
-:
+#:
 G-
 ```
 ![tut 10](./example-10.svg)
