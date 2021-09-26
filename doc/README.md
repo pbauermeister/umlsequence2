@@ -245,7 +245,7 @@ O1 => O2 return=
 
 ```umlsequence 08a.svg
 O : Object
-
+:
 O // comment
 ```
 ![Request+return message](./08a.svg)
@@ -276,8 +276,8 @@ O1 : Object 1
 O2 : Object 2
 
 :
-O2 // [,up .2 left 1]comment 1
-O1 // [,down .2 right .35]comment 2
+O1 // [,down .6 right 1.75]comment 2
+O2 // [,up .1 left .3]comment 1
 :
 ```
 ![Request+return message](./08c.svg)
@@ -291,8 +291,8 @@ O1 // [,down .2 right .35]comment 2
 ```umlsequence 08d.svg
 O1 : Object 1
 O2 : Object 2
-
-O2 // [C1, down .2 right .3]comment
+:
+O2 // [C1, down .2 left .3] comment
 :
 O1 // [C1]
 :
@@ -301,6 +301,8 @@ O2 // [C1]
 ![Request+return message](./08d.svg)
 
 ## 9. Frames
+
+### 9.a. Basic frame
 
 - Use `FID [ ID1 LABEL` to begin a named frame from object ID1,
 - and `ID2 ] FID` to end a frame, enclosing object ID2.
@@ -318,15 +320,54 @@ O2 ] Frame1
 ```
 ![Request+return message](./09a.svg)
 
-Frames may be nested or may overlap:
+### 9.a. Frames overlapping
+
+- Frames may overlap.
+- As long as they are distinct in time, you can reuse the same frame
+  ID.
+
 ```umlsequence 09b.svg
 O1 : Object 1
 O2 : Object 2
-O3 : Object 2
+O3 : Object 3
 
-Frame1 [ O1  Frame 1
-Frame2 [ O2  Frame 2
-O2 ] Frame1
-O3 ] Frame2
+# Overlapping frames:
+Frame1 [ O1     Frame 1
+Frame2 [ O2     Frame 2
+O2     ] Frame1
+O3     ] Frame2
+:
+
+# Re-using FID:
+Frame  [ O1      Frame
+O1     ] Frame
+Frame  [ O1      Frame, again
+O1     ] Frame
+Frame  [ O1      Frame, yet again
+O3     ] Frame
 ```
 ![Request+return message](./09b.svg)
+
+
+### 9.b. Frames nesting
+
+When nesting frames, you can alter the width to improve clarity.
+
+- To grow a frame, prefix the label with `[out VALUE]`,
+- To shrink a frame, prefix the label with `[in VALUE]`,
+- with VALUE in cm.
+
+```umlsequence 09c.svg
+U  * User
+O1 : Object 1
+O2 : Object 2
+
+Frame1 [ O1  [out .4]Outer frame
+Frame2 [ O1  Frame
+Frame3 [ O1  [in .4]Inner frame
+
+O2     ] Frame3
+O2     ] Frame2
+O2     ] Frame1
+```
+![Request+return message](./09c.svg)
