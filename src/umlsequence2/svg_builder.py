@@ -58,7 +58,7 @@ class SvgBuilder:
         points_px = [(cm2px(x), cm2px(y)) for x, y in points]
         a = dict(points=points_px,
                  fill='white' if filled else 'none',
-                 stroke='grey' if grey else 'black')
+                 stroke=CONFIG.COLOR_GREY if grey else 'black')
         self.add(self.dwg.polyline(**a))
         for xp, yp in points_px:
             self.set_max(xp, yp)
@@ -102,7 +102,7 @@ class SvgBuilder:
         a = dict(insert=(xp, yp),
                  size=(wp, hp),
                  fill='none' if transparent else 'white',
-                 stroke='grey' if grey else 'black',
+                 stroke=CONFIG.COLOR_GREY if grey else 'black',
                  stroke_width=1)
         self.add(self.dwg.rect(**a))
         self.set_max(xp + wp, yp + hp)
@@ -115,7 +115,7 @@ class SvgBuilder:
         x2p, y2p = cm2px(x2), cm2px(y2)
         a = dict(start=(x1p, y1p),
                  end=(x2p, y2p),
-                 stroke='grey' if grey else 'black',
+                 stroke=CONFIG.COLOR_GREY if grey else 'black',
                  stroke_width=2 if thick else 1)
         if dashed:
             a['stroke_dasharray'] = '4'

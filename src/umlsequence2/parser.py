@@ -72,6 +72,15 @@ class Parser:
             nlines = len(texts)
             return text1, text2, nlines, maxlen
 
+        def parse_meta(text, nb_metas):
+            if text.startswith("["):
+                opts, text = text[1:].split("]", 1)
+                metas = (opts + ","*nb_metas).split(",")[:nb_metas]
+            else:
+                opts = ""
+            metas = (opts + ","*nb_metas).split(",")[:nb_metas]
+            return [s.strip() for s in metas], text.strip()
+
         def do_line(line_nr, line, level=0):
             if not line.strip():
                 return
@@ -234,24 +243,11 @@ class Parser:
 
                 elif op == "//":
                     r2 = (r + " " + edge).strip()
-                    if r2.startswith("["):
-                        opts, text = r2[1:].split("]", 1)  # opts passed
-                    else:
-                        opts, text = "", r2                # no opts passed
-                    opts = (opts + ",,").split(",")[:3]    # insure 3 elements
-                    text = text.strip()
-
+                    opts, text = parse_meta(r2, 2)
                     if not text:
                         append(('connect_to_comment', l, opts[0]))
                     else:
                         text1, text2, nlines, maxlen = nl2str(text)
-                        if not opts[1]:  # auto-calculate box pos
-                            opts[1] = "down 0 right"
-                        if not opts[2]:  # auto-calculate box size
-                            w = 0.10 + float(maxlen) / 13.0
-                            h = 0.10 + 0.16 * nlines
-                            opts[2] = "wid %.2f ht %.2f" % (w, h)
-                        opts = ",".join(opts)
                         append(('comment', l, opts, text2))
                     if lop:
                         do_line(line_nr, l + lop, level + 1)

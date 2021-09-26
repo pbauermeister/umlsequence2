@@ -10,7 +10,7 @@ RX_COMMENT_POS = re.compile(r'\s*(\S+)\s+(\S+)')
 
 
 Object  = namedtuple('object', 'type index name label ypos row')
-Comment = namedtuple('comment', 'xport yport')
+Comment = namedtuple('comment', 'x y width height')
 Frame   = namedtuple('frame', 'xpos ypos label')
 
 
@@ -79,6 +79,9 @@ class Renderer:
         if activity:
             x += self.nb_active(obj.name) * C.ACTIVITY_WIDTH/2
         return x
+
+    def warn(self, cmd, args, warning):
+        print(f'WARNING: {warning}: {cmd} {args}', file=sys.stderr)
 
     def nb_active(self, name):
         return len(self.activity_dic.get(name, []))
@@ -219,6 +222,8 @@ class Renderer:
             self.gfx.cross(x, self.ypos, C.CROSS_SIZE)
 
         self.handle_complete('complete', [dst])
+        self.ypos += C.STEP_NORMAL
+
 
     def handle_rmessage(self, cmd, args):
         if cmd != 'rmessage': return
@@ -309,51 +314,76 @@ class Renderer:
     def handle_comment(self, cmd, args):
         if cmd != 'comment': return
         name, meta, text = args
+        comment_name, pos = meta
 
-        comment_name, pos, size = (meta + ',,').split(',')[:3]
-        #,down .2 right .25,wid 2.02 ht 0.26
         pos_terms = RX_COMMENT_POS.findall(pos)
         o = self.objects_dic[name]
         height = len(text.split('\n')) * C.TEXT_HEIGHT + C.TEXT_MARGIN_Y
         x1, y1 = self.get_x(o, True), self.ypos
         x2, y2 = x1, y1 - height/2
-        x2offset = C.COLUMN_WIDTH / 2
+        x2offset = C.COLUMN_WIDTH/4
+
+        lines = text.split('\n')
+        length = max([self.gfx.get_text_width(l) for l in lines])
+        width = length + C.TEXT_MARGIN_X + C.TEXT_DOGEAR
+
         for key, value in pos_terms:
-            value = float(value) * C.SIZINGS_FACTOR
+            value = float(value)
             if key == 'down':
                 y2 += value
             elif key == 'up':
                 y2 -= value
             elif key == 'left':
-                x2offset -= value
+                x2offset = -value
+                x2 -= width
             elif key == 'right':
                 x2offset = value
+            else:
+                self.warn(cmd, args,
+                          f'Unknown layout directive "{key} {value}"')
         x2 += x2offset
-        y3 = y2 + height/2
+
+        comment = Comment(x2, y2, width, height)
         if comment_name:
-            self.comment_dic[comment_name] = Comment(x2, y3)
+            self.comment_dic[comment_name] = comment
 
         if self.layer_nr == 2:
-            lines = text.split('\n')
-            length = max([self.gfx.get_text_width(l) for l in lines])
-            width = length + C.TEXT_MARGIN_X + C.TEXT_DOGEAR
-
-            self.gfx.line(x1, y1, x2, y2+height/2, grey=True, dotted=True)
             self.gfx.comment_box(x2, y2, width, height, C.TEXT_DOGEAR)
+            #self.gfx.line(x1, y1, x2, y2+height/2, grey=True, dotted=True)
+            self.make_comment_connector(x1, y1, comment)
 
             dx = C.TEXT_MARGIN_X
             dy = C.TEXT_HEIGHT
             for line in lines:
                 self.gfx.text(x2+dx, y2+dy, line, light=True)
                 dy += C.TEXT_HEIGHT
+
+    def make_comment_connector(self, x, y, comment):
+        if comment.x > x:
+            x2 = comment.x
+            y2 = comment.y + comment.height/2
+        elif comment.x + comment.width < x:
+            x2 = comment.x + comment.width
+            y2 = comment.y + comment.height/2
+        elif comment.y > y:
+            x2 = comment.x + comment.width/2
+            y2 = comment.y
+        elif comment.y + comment.height < y:
+            x2 = comment.x + comment.width/2
+            y2 = comment.y + comment.height
+        else:
+            return
+        self.gfx.line(x, y, x2, y2, grey=True, dotted=True)
+
     def handle_connect_to_comment(self, cmd, args):
         if cmd != 'connect_to_comment': return
         src, dst = args
         o = self.objects_dic[src]
         c = self.comment_dic[dst]
         x1, y1 = self.get_x(o, True), self.ypos
-        x2, y2 = c.xport, c.yport
-        self.gfx.line(x1, y1, x2, y2, grey=True, dotted=True)
+        self.make_comment_connector(x1, y1, c)
+        #x2, y2 = c.xport, c.yport
+        #self.gfx.line(x1, y1, x2, y2, grey=True, dotted=True)
 
     def handle_begin_frame(self, cmd, args):
         if cmd != 'begin_frame': return
@@ -409,7 +439,7 @@ class Renderer:
                 y1 = o.ypos + C.STEP_NORMAL
                 y2 = self.ypos + .1
                 if self.layer_nr == 1:
-                    self.gfx.line(x, y1, x, y2,dashed=True)
+                    self.gfx.line(x, y1, x, y2,dashed=True, grey=True)
             self.dead_objects_dic[name] = self.objects_dic[name]
             del self.objects_dic[name]
 
@@ -476,7 +506,8 @@ class Renderer:
 
     def inactivate(self, name):
         o = self.objects_dic[name]
-        x = self.get_x(o, True) + self.nb_active(name)*C.ACTIVITY_WIDTH/2 - C.ACTIVITY_WIDTH
+        x = self.get_x(o, True) + self.nb_active(name)*C.ACTIVITY_WIDTH/2 \
+            - C.ACTIVITY_WIDTH
         if not len(self.activity_dic[name]):
             error(f'Cannot inactivate {name} because it is not active', self)
         y = self.activity_dic[name][-1]

@@ -9,6 +9,8 @@ Config = namedtuple('config', (
 
     'ARROW_HEAD_SIZE',
 
+    'COLOR_GREY',
+
     'COLUMN_SPACING',
     'COLUMN_WIDTH',
 
@@ -19,8 +21,6 @@ Config = namedtuple('config', (
     'OBJECT_HEIGHT',
     'OBJECT_LABEL_Y',
     'OBJECT_STEP',
-
-    'SIZINGS_FACTOR',
 
     'STEP_NORMAL',
     'STEP_SMALL',
@@ -42,6 +42,8 @@ CONFIG = Config(
 
     ARROW_HEAD_SIZE = 0.30,
 
+    COLOR_GREY      = '#aaaaaa',
+
     COLUMN_SPACING  = 0.25,
     COLUMN_WIDTH    = 2.75,
 
@@ -51,9 +53,7 @@ CONFIG = Config(
 
     OBJECT_HEIGHT   = 0.60,
     OBJECT_LABEL_Y  = 0.40,
-    OBJECT_STEP     = 1.00,
-
-    SIZINGS_FACTOR  = 2.8,
+    OBJECT_STEP     = 0.60,
 
     STEP_NORMAL     = 0.6,
     STEP_SMALL      = 0.3,
