@@ -1,5 +1,11 @@
+"""Configuration definitions and declaration.
+
+All size and style values are set here.
+
+"""
 from collections import OrderedDict, namedtuple
 
+# Dimensions are in cm.
 Config = namedtuple('config', (
     'ACTIVITY_WIDTH',
 
@@ -34,7 +40,7 @@ Config = namedtuple('config', (
 ))
 
 CONFIG = Config(
-    ACTIVITY_WIDTH  = .20,
+    ACTIVITY_WIDTH  = 0.20,
 
     ACTOR_ASCENT    = 0.25,
     ACTOR_DESCENT   = 0.45,
@@ -55,15 +61,14 @@ CONFIG = Config(
     OBJECT_LABEL_Y  = 0.40,
     OBJECT_STEP     = 0.90,
 
-    STEP_NORMAL     = 0.6,
-    STEP_SMALL      = 0.3,
+    STEP_NORMAL     = 0.60,
+    STEP_SMALL      = 0.30,
 
     TEXT_CHAR_WIDTH = 0.145,
     TEXT_DOGEAR     = 0.20,
     TEXT_HEIGHT     = 0.40,
-    TEXT_FONT       = dict(font_family='Arial, Helvetica, sans-serif',
+    TEXT_FONT       = dict(font_family='Helvetica, Arial, sans-serif',
                            font_size='10px'),
     TEXT_MARGIN_X   = 0.20,
     TEXT_MARGIN_Y   = 0.15,
-
 )
