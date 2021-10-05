@@ -1,18 +1,21 @@
+"""Implement graphic primitives as SVG elements."""
 import svgwrite
 from svgwrite import cm, mm
 
 from .config import CONFIG
 
+
 def cm2px(cm):
     return cm * 35.43307
     return round(cm * 35.43307, 2)
+
 
 def px2cm(px):
     return px / 35.43307
     return round(px / 35.43307, 2)
 
 
-class SvgBuilder:
+class SvgRenderer:
     def __init__(self, out_path, percent_zoom, bg_color='white'):
         self.dwg = svgwrite.Drawing(filename=out_path, debug=True)
         self.zoom = percent_zoom/100

@@ -1,10 +1,13 @@
+"""Parse input code.
+
+Tokenize and parse input code, and translate to intermediate commands.
+
+"""
 import re
 
 
 def escape(s):
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-
-###############################################################################
 
 
 class Parser:

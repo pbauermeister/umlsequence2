@@ -1,44 +1,44 @@
+"""Render intermediate UML code to graphic primitives."""
 import sys
 import re
 from subprocess import Popen, PIPE
 from collections import OrderedDict, namedtuple
 
 from .config import CONFIG as C
-from .svg_builder import SvgBuilder
+from .svg_renderer import SvgRenderer
 
 RX_COMMENT_POS = re.compile(r'\s*(\S+)\s+(\S+)')
 RX_FRAME_OPTS = re.compile(r'\s*(\S+)\s+(\S+)')
-
 
 Object  = namedtuple('object', 'type index name label ypos row')
 Comment = namedtuple('comment', 'x y width height')
 Frame   = namedtuple('frame', 'xpos ypos label out')
 
 
-def error(message, renderer):
+def error(message, builder):
     print(f'ERROR: {message}:', file=sys.stderr)
-    print(f'  {renderer.line_nr}: {renderer.line}', file=sys.stderr)
+    print(f'  {builder.line_nr}: {builder.line}', file=sys.stderr)
     sys.exit(1)
 
 
 class CheckedOrderedDict(OrderedDict):
-    def __init__(self, name, renderer):
+    def __init__(self, name, builder):
         self.name = name
-        self.renderer = renderer
+        self.builder = builder
         super().__init__()
 
     def __getitem__(self, key):
         try:
             return super().__getitem__(key)
         except KeyError:
-            error(f'There is no {self.name} named "{key}"', self.renderer)
+            error(f'There is no {self.name} named "{key}"', self.builder)
             sys.exit(1)
 
 
-class Renderer:
+class UmlBuilder:
     def __init__(self, lines, out_path, percent_zoom, bg_color):
         self.lines = lines
-        self.gfx = SvgBuilder(out_path, percent_zoom, bg_color)
+        self.gfx = SvgRenderer(out_path, percent_zoom, bg_color)
         self.warnings = set()
         self.g = {}
 

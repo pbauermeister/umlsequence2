@@ -1,20 +1,9 @@
-#!/usr/bin/env python3
+"""Orchestrate the work.
 
-"""Command-line UML sequence diagram generator (version 2).
-Converts a textual UML sequence description into a graphic file.
------
-See https://github.com/pbauermeister/umlsequence2/ for information,
-syntax and examples.
------
-(C) Copyright 2021 by Pascal Bauermeister.
------
-Usage:
-  umlsequence2 -h                 print help for options
-  umlsequence2 FILE.umlsequence   generates FILE.svg
+Parse commandline args, read input, generate diagram, and convert to
+desired output format.
 
-See README.md for more information.
 """
-
 import argparse
 import io
 import os
@@ -22,10 +11,24 @@ import re
 import sys
 import tempfile
 
-from umlsequence2 import generate_svg
-from umlsequence2.convert import convert
+from .converter import convert
+from .uml_builder import UmlBuilder
+from .parser import Parser
 
-def run(input_fp, output_path, percent_zoom, debug, bgcolor, format):
+
+def generate_svg(input_fp, output_path, percent_zoom, debug, bgcolor):
+    cmds, raw = Parser(input_fp.read()).parse()
+
+    if debug:
+        print(raw, file=sys.stderr)
+        print("----------", file=sys.stderr)
+        for cmd in cmds:
+            print(cmd[0], ', '.join([repr(a) for a in cmd[1:]]))
+
+    UmlBuilder(cmds, output_path, percent_zoom, bgcolor).run()
+
+
+def generate(input_fp, output_path, percent_zoom, debug, bgcolor, format):
     if debug:
         print(dict(input=input_fp.name,
                    output=output_path,
@@ -44,11 +47,8 @@ def run(input_fp, output_path, percent_zoom, debug, bgcolor, format):
             convert(path, output_path, format)
 
 
-def main():
-    parts = [each.strip() for each in __doc__.split('-----')]
-    parser = argparse.ArgumentParser(
-        description=parts[0],
-        epilog=parts[1])
+def main(description, epilog):
+    parser = argparse.ArgumentParser(description=description, epilog=epilog)
 
     parser.add_argument('INPUT_FILE',
                         action="store",
@@ -110,8 +110,8 @@ def main():
             inp = io.StringIO(snippet['src'])
             name = snippet['output']
             inp.name = name
-            run(inp, name, args.percent_zoom, args.debug, args.background_color,
-                args.format)
+            generate(inp, name, args.percent_zoom, args.debug,
+                     args.background_color, args.format)
             print(f'{sys.argv[0]}: generated {name}', file=sys.stderr)
         sys.exit(0)
 
@@ -128,15 +128,12 @@ def main():
         # output to stdout
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, 'file.svg')
-            run(inp, path, args.percent_zoom, args.debug, args.background_color,
-                args.format)
+            generate(inp, path, args.percent_zoom, args.debug,
+                     args.background_color, args.format)
             with open(path) as f:
                 print(f.read())
     else:
         # output to file
-        run(inp, name, args.percent_zoom, args.debug, args.background_color,
-            args.format)
+        generate(inp, name, args.percent_zoom, args.debug,
+                 args.background_color, args.format)
     sys.exit(0)
-
-if __name__ == "__main__":
-    main()

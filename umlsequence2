@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+
+"""Command-line UML sequence diagram generator (version 2).
+Converts a textual UML sequence description into a graphic file.
+-----
+See https://github.com/pbauermeister/umlsequence2/ for information,
+syntax and examples.
+-----
+(C) Copyright 2021 by Pascal Bauermeister.
+-----
+See README.md for more information.
+"""
+
 import os.path
 import sys
 
@@ -6,5 +18,7 @@ home = os.path.split(sys.argv[0])[0]
 sys.path.append(os.path.join(home, 'src'))
 
 if __name__ == "__main__":
-    from src.umlsequence2.run import main
-    main()
+    from src.umlsequence2.main import main
+
+    desc, epilog, _, _ = [each.strip() for each in __doc__.split('-----')]
+    main(desc, epilog)
