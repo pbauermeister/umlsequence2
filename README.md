@@ -1,13 +1,15 @@
-umlsequence
-===========
+umlsequence2
+============
 
 UML Sequence Diagrams Generator - Commandline tool to generate
 diagrams as images in various formats (SVG, PNG, JPG, PDF, etc.) from
 source text files.
 
-This is a pure-Python rewrite of the
+Source code: https://github.com/pbauermeister/umlsequence2
+
+(This is a pure-Python rewrite of the
 https://github.com/pbauermeister/umlsequence project, which was itself
-based on umlgraph by Diomidis Spinellis.
+based on umlgraph by Diomidis Spinellis.)
 
 Source text files are in the so-called "umlsequence" syntax.
 
