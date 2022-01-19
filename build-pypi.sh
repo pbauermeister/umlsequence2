@@ -8,6 +8,10 @@
 #
 # Getting a token:
 #   https://pypi.org/manage/account/token/
+#
+# Version info: please update the file
+#   setup.cfg
+#
 
 set -ex
 
