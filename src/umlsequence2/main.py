@@ -23,6 +23,7 @@ import tempfile
 from .converter import convert
 from .uml_builder import UmlBuilder
 from .parser import Parser
+from .config import Config, set_config, get_config
 
 
 def generate_svg(input_fp, output_path, percent_zoom, debug, bgcolor):
@@ -102,8 +103,23 @@ def main():
                         default=False,
                         help='emits debug messages')
 
+    # add config float values, e.g. COLUMN_WIDTH as --COLUMN-WIDTH
+    cfg = get_config()._asdict()
+    conf_keys = [k for k, v in cfg.items() if isinstance(v, float)]
+    for k in conf_keys:
+        parser.add_argument('--' + k.replace('_', '-'),
+                            metavar='FLOAT', type=float,
+                            help=f'change {k} (default {cfg[k]})')
+
     args = parser.parse_args()
     args.format = args.format.lower()
+
+    # parse back config modifiers args
+    conf_args = {k:args.__dict__[k] for k in conf_keys
+                 if args.__dict__[k] is not None}
+    if conf_args:
+        cfg.update(conf_args)
+        set_config(Config(**cfg))
 
     # treat input
     if args.INPUT_FILE is None:

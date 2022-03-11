@@ -39,7 +39,7 @@ Config = namedtuple('config', (
     'TEXT_MARGIN_Y',
 ))
 
-CONFIG = Config(
+_CONFIG = Config(
     ACTIVITY_WIDTH  = 0.20,
 
     ACTOR_ASCENT    = 0.25,
@@ -72,3 +72,10 @@ CONFIG = Config(
     TEXT_MARGIN_X   = 0.20,
     TEXT_MARGIN_Y   = 0.15,
 )
+
+def set_config(cfg):
+    global _CONFIG
+    _CONFIG = cfg
+
+def get_config():
+    return _CONFIG

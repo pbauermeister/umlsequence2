@@ -2,7 +2,7 @@
 import svgwrite
 from svgwrite import cm, mm
 
-from .config import CONFIG
+from .config import get_config
 
 
 def cm2px(cm):
@@ -61,7 +61,7 @@ class SvgRenderer:
         points_px = [(cm2px(x), cm2px(y)) for x, y in points]
         a = dict(points=points_px,
                  fill='white' if filled else 'none',
-                 stroke=CONFIG.COLOR_GREY if grey else 'black')
+                 stroke=get_config().COLOR_GREY if grey else 'black')
         self.add(self.dwg.polyline(**a))
         for xp, yp in points_px:
             self.set_max(xp, yp)
@@ -75,7 +75,7 @@ class SvgRenderer:
 
     def get_text_width(self, text):
         #FIXME
-        return CONFIG.TEXT_CHAR_WIDTH * len(text)
+        return get_config().TEXT_CHAR_WIDTH * len(text)
 
     def text(self, x, y, text, underline=False,
              start=False, middle=False, end=False,
@@ -83,7 +83,7 @@ class SvgRenderer:
         xp, yp = cm2px(x), cm2px(y)
         a = dict(fill='#444' if light else 'black',
                  insert=(xp, yp),
-                 **CONFIG.TEXT_FONT)
+                 **get_config().TEXT_FONT)
         l = cm2px(self.get_text_width(text))
         if start or not start and not middle and not end:
             a['text_anchor'] = 'start'
@@ -105,7 +105,7 @@ class SvgRenderer:
         a = dict(insert=(xp, yp),
                  size=(wp, hp),
                  fill='none' if transparent else 'white',
-                 stroke=CONFIG.COLOR_GREY if grey else 'black',
+                 stroke=get_config().COLOR_GREY if grey else 'black',
                  stroke_width=1)
         self.add(self.dwg.rect(**a))
         self.set_max(xp + wp, yp + hp)
@@ -118,7 +118,7 @@ class SvgRenderer:
         x2p, y2p = cm2px(x2), cm2px(y2)
         a = dict(start=(x1p, y1p),
                  end=(x2p, y2p),
-                 stroke=CONFIG.COLOR_GREY if grey else 'black',
+                 stroke=get_config().COLOR_GREY if grey else 'black',
                  stroke_width=2 if thick else 1)
         if dashed:
             a['stroke_dasharray'] = '4'
