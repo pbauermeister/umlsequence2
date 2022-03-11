@@ -102,4 +102,35 @@ optional arguments:
                         US/docs/Web/CSS/color_value for a list of valid
                         names; default is white
   --debug               emits debug messages
+  --ACTIVITY-WIDTH FLOAT
+                        change ACTIVITY_WIDTH (default 0.2)
+  --ACTOR-ASCENT FLOAT  change ACTOR_ASCENT (default 0.25)
+  --ACTOR-DESCENT FLOAT
+                        change ACTOR_DESCENT (default 0.45)
+  --ACTOR-LABEL-Y FLOAT
+                        change ACTOR_LABEL_Y (default 0.9)
+  --ARROW-HEAD-SIZE FLOAT
+                        change ARROW_HEAD_SIZE (default 0.3)
+  --COLUMN-SPACING FLOAT
+                        change COLUMN_SPACING (default 0.25)
+  --COLUMN-WIDTH FLOAT  change COLUMN_WIDTH (default 2.75)
+  --CROSS-SIZE FLOAT    change CROSS_SIZE (default 0.5)
+  --MESSAGE-SPACING FLOAT
+                        change MESSAGE_SPACING (default 0.05)
+  --OBJECT-HEIGHT FLOAT
+                        change OBJECT_HEIGHT (default 0.6)
+  --OBJECT-LABEL-Y FLOAT
+                        change OBJECT_LABEL_Y (default 0.4)
+  --OBJECT-STEP FLOAT   change OBJECT_STEP (default 0.9)
+  --STEP-NORMAL FLOAT   change STEP_NORMAL (default 0.6)
+  --STEP-SMALL FLOAT    change STEP_SMALL (default 0.3)
+  --TEXT-CHAR-WIDTH FLOAT
+                        change TEXT_CHAR_WIDTH (default 0.145)
+  --TEXT-DOGEAR FLOAT   change TEXT_DOGEAR (default 0.2)
+  --TEXT-HEIGHT FLOAT   change TEXT_HEIGHT (default 0.4)
+  --TEXT-MARGIN-X FLOAT
+                        change TEXT_MARGIN_X (default 0.2)
+  --TEXT-MARGIN-Y FLOAT
+                        change TEXT_MARGIN_Y (default 0.15)
+
 ```
