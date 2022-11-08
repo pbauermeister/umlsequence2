@@ -16,6 +16,7 @@ desired output format.
 import argparse
 import io
 import os
+import pkg_resources
 import re
 import sys
 import tempfile
@@ -24,6 +25,8 @@ from .converter import convert
 from .uml_builder import UmlBuilder
 from .parser import Parser
 from .config import Config, set_config, get_config
+
+VERSION = pkg_resources.require("umlsequence2")[0].version
 
 
 def generate_svg(input_fp, output_path, percent_zoom, debug, bgcolor):
@@ -103,6 +106,10 @@ def main():
                         default=False,
                         help='emits debug messages')
 
+    parser.add_argument('--version', '-V',
+                        action='store_true',
+                        help='print the version and exit')
+
     # add config float values, e.g. COLUMN_WIDTH as --COLUMN-WIDTH
     cfg = get_config()._asdict()
     conf_keys = [k for k, v in cfg.items() if isinstance(v, float)]
@@ -113,6 +120,11 @@ def main():
 
     args = parser.parse_args()
     args.format = args.format.lower()
+
+    # version?
+    if args.version:
+        print('umlsequence2', VERSION)
+        sys.exit(0)
 
     # parse back config modifiers args
     conf_args = {k:args.__dict__[k] for k in conf_keys
