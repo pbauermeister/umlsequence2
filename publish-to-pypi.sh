@@ -10,12 +10,21 @@
 #   https://pypi.org/manage/account/token/
 #
 # Version info: please update the file
-#   setup.cfg
+#   setup.py
 #
 
-set -ex
+. ./set-ex.sh
 
-rm -rf dist/ src/*.egg-info/
-python3 -m build
+./build.sh
+
+
+banner2 "Publishing to Pypi"
+
+if [ ! -f .token ]; then
+    echo "ERROR: please have a file named '.token' containing your pypi token"
+    exit 1
+fi
+
+python3 setup.py sdist
 python3 -m twine upload --username __token__ dist/* \
 	--password $(cat .token) --verbose

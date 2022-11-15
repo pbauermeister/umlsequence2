@@ -3,43 +3,12 @@
 All size and style values are set here.
 
 """
-from collections import OrderedDict, namedtuple
+
+from . import model
+
 
 # Dimensions are in cm.
-Config = namedtuple('config', (
-    'ACTIVITY_WIDTH',
-
-    'ACTOR_ASCENT',
-    'ACTOR_DESCENT',
-    'ACTOR_LABEL_Y',
-
-    'ARROW_HEAD_SIZE',
-
-    'COLOR_GREY',
-
-    'COLUMN_SPACING',
-    'COLUMN_WIDTH',
-
-    'CROSS_SIZE',
-
-    'MESSAGE_SPACING',
-
-    'OBJECT_HEIGHT',
-    'OBJECT_LABEL_Y',
-    'OBJECT_STEP',
-
-    'STEP_NORMAL',
-    'STEP_SMALL',
-
-    'TEXT_CHAR_WIDTH',
-    'TEXT_DOGEAR',
-    'TEXT_FONT',
-    'TEXT_HEIGHT',
-    'TEXT_MARGIN_X',
-    'TEXT_MARGIN_Y',
-))
-
-_CONFIG = Config(
+_CONFIG = model.Config(
     ACTIVITY_WIDTH  = 0.20,
 
     ACTOR_ASCENT    = 0.25,
@@ -73,9 +42,9 @@ _CONFIG = Config(
     TEXT_MARGIN_Y   = 0.15,
 )
 
-def set_config(cfg):
+def set_config(cfg: model.Config) -> None:
     global _CONFIG
     _CONFIG = cfg
 
-def get_config():
+def get_config() -> model.Config:
     return _CONFIG
