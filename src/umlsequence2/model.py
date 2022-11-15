@@ -36,7 +36,7 @@ class Config:
     TEXT_MARGIN_Y:   float
 
 
-class UmlSeqException(Exception):
+class UmlSequenceError(Exception):
     pass
 
 

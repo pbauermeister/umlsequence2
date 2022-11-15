@@ -7,8 +7,9 @@ banner2 "Cleaning up"
 banner2 "Linting"
 ./lint.sh
 
-banner2 "Testing"
-./test.sh
+# TODO:
+#banner2 "Testing"
+#./test.sh
 
 banner2 "Making doc"
 ./make-doc.sh

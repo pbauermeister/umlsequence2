@@ -42,9 +42,11 @@ _CONFIG = model.Config(
     TEXT_MARGIN_Y   = 0.15,
 )
 
+
 def set_config(cfg: model.Config) -> None:
     global _CONFIG
     _CONFIG = cfg
+
 
 def get_config() -> model.Config:
     return _CONFIG

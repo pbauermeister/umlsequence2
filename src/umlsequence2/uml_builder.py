@@ -15,15 +15,11 @@ from. import model
 RX_COMMENT_POS = re.compile(r'\s*(\S+)\s+(\S+)')
 RX_FRAME_OPTS = re.compile(r'\s*(\S+)\s+(\S+)')
 
-#Object  = namedtuple('object', 'type index name label ypos row')
-#Comment = namedtuple('comment', 'x y width height')
-#Frame   = namedtuple('frame', 'xpos ypos label out')
-
 
 def error(message: str, builder: UmlBuilder) -> None:
-    print(f'ERROR: {message}:', file=sys.stderr)
-    print(f'  {builder.line_nr}: {builder.line}', file=sys.stderr)
-    sys.exit(1)
+    raise model.UmlSequenceError(
+        f'ERROR: {message}:\n'
+        f'  {builder.line_nr}: {builder.line}')
 
 
 T = TypeVar("T")
@@ -40,7 +36,6 @@ class CheckedOrderedDict(OrderedDict[str, T]):
             return super().__getitem__(key)
         except KeyError:
             error(f'There is no {self.name} named "{key}"', self.builder)
-            sys.exit(1)
 
 
 CODict = CheckedOrderedDict

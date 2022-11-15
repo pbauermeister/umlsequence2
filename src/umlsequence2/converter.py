@@ -3,8 +3,8 @@
 All formats supported by reportlab, plus PDF, can be used.
 
 """
-from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF, renderPM, renderPS
+from svglib.svglib import svg2rlg
 
 
 def convert(from_svg_path: str, to_path: str, format: str) -> None:

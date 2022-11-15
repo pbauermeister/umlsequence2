@@ -111,7 +111,7 @@ class Parser:
                 r, _, nlines, maxlen = nl2str(r)
                 if not l:
                     if not self.objects:
-                        raise model.UmlSeqException(
+                        raise model.UmlSequenceError(
                             f'{line}: Adding constraint to last object, '
                             f'while no object is defined')
                     append('oconstraint', [self.objects[-1], r])

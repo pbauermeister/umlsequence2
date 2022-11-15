@@ -28,6 +28,7 @@ from .converter import convert
 from .model import Config
 from .parser import Parser
 from .uml_builder import UmlBuilder
+from . import error
 
 VERSION = pkg_resources.require("umlsequence2")[0].version
 
@@ -65,7 +66,7 @@ def generate(input_fp: TextIO, output_path: str, percent_zoom: int,
             convert(path, output_path, format)
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
     description, epilog = [each.strip() for each in __doc__.split('-----')[:2]]
 
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
@@ -126,11 +127,6 @@ def main() -> None:
     args = parser.parse_args()
     args.format = args.format.lower()
 
-    # version?
-    if args.version:
-        print('umlsequence2', VERSION)
-        sys.exit(0)
-
     # parse back config modifiers args
     conf_args = {k:args.__dict__[k] for k in conf_keys
                  if args.__dict__[k] is not None}
@@ -138,6 +134,10 @@ def main() -> None:
         cfg.update(conf_args)
         set_config(Config(**cfg))
 
+    return args
+
+
+def run(args: argparse.Namespace) -> None:
     # treat input
     if args.INPUT_FILE is None:
         inp = sys.stdin
@@ -158,7 +158,7 @@ def main() -> None:
             generate(inp, name, args.percent_zoom, args.debug,
                      args.background_color, args.format)
             print(f'{sys.argv[0]}: generated {name}', file=sys.stderr)
-        sys.exit(0)
+        return
 
     # treat output
     if args.output_file is None:
@@ -181,4 +181,20 @@ def main() -> None:
         # output to file
         generate(inp, name, args.percent_zoom, args.debug,
                  args.background_color, args.format)
+
+
+def main() -> None:
+    args = parse_args()
+
+    # version?
+    if args.version:
+        print('umlsequence2', VERSION)
+        sys.exit(0)
+
+    try:
+        run(args)
+    except model.UmlSequenceError as e:
+        error.print_error(e)
+        sys.exit(1)
+
     sys.exit(0)
