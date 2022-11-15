@@ -4,9 +4,12 @@ Tokenize and parse input code, and translate to intermediate commands.
 
 """
 import re
+from typing import Any
+
+from . import model
 
 
-def escape(s):
+def escape(s: str) -> str:
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
@@ -34,39 +37,30 @@ class Parser:
         "([#A-Za-z_0-9]*)([\+\-\#~!]?)"
         " *"
         "(.*)")
-
-    #RE_MESSAGE_call = re.compile("([A-Za-z_0-9]+) *(=) *(.*)")
     RE_MESSAGE_call = re.compile("(.*?) *(=) *(.*)")
-
     RE_OBJ_STATE = re.compile("([A-Za-z_0-9]+[\+\-\#~!]|:)+")
-
     RE_CONSTRAINT = re.compile("([A-Za-z_0-9]*)([\+\-\#~!]?) *(_?)\{(.*)\}")
 
     extensions = ['.dot']
 
-    def __init__(self, raw):
-        # save call arguments for later use in format()
-        self.raw = raw.encode('utf-8')
-        self.raw = raw.encode('latin1')
+    def __init__(self, raw: str):
         self.raw = raw
 
-        return
-
-    def parse1(self, lines):
-        cmds = []
+    def parse1(self, lines: list[str]) -> list[model.Command]:
+        cmds: list[model.Command] = []
 
         self.has_first_step = False
-        self.objects = []
+        self.objects: list[str] = []
 
-        def add_obj(name):
+        def add_obj(name: str) -> None:
             if name not in self.objects:
                 self.objects.append(name)
 
-        def rem_obj(name):
+        def rem_obj(name: str) -> None:
             if name in self.objects:
                 self.objects.remove(name)
 
-        def nl2str(text):
+        def nl2str(text: str) -> tuple[str, str, int, int]:
             texts = text.split("\\n")
             texts = [t.strip() for t in texts]
             maxlen = max([len(t) for t in texts])
@@ -75,7 +69,7 @@ class Parser:
             nlines = len(texts)
             return text1, text2, nlines, maxlen
 
-        def parse_option(text, nb_options):
+        def parse_option(text: str, nb_options: int) -> tuple[list[str], str]:
             if text.startswith("["):
                 opts, text = text[1:].split("]", 1)
                 options = (opts + ","*nb_options).split(",")[:nb_options]
@@ -84,14 +78,14 @@ class Parser:
             options = (opts + ","*nb_options).split(",")[:nb_options]
             return [s.strip() for s in options], text.strip()
 
-        def do_line(line_nr, line, level=0):
+        def do_line(line_nr: int, line: str, level: int = 0) -> None:
             if not line.strip():
                 return
 
-            def append(args):
-                cmds.append(args)
+            def append(cmd: str, args: list[Any]) -> None:
+                cmds.append(model.Command(cmd, args))
 
-            append(('#####', line_nr, line))
+            append('#####', [str(line_nr), line])
             oline = line
 
             line = line.strip()
@@ -108,15 +102,16 @@ class Parser:
                 r, _, nlines, maxlen = nl2str(r)
                 if not l:
                     if not self.objects:
-                        fail(line, 'Adding constraint to last object, '
-                             'while no object is defined')
-                    append(('oconstraint', self.objects[-1], r))
+                        raise model.UmlSequenceError(
+                            f'{line}: Adding constraint to last object, '
+                            f'while no object is defined')
+                    append('oconstraint', [self.objects[-1], r])
                 elif not below:
-                    append(('lconstraint', l, r))
+                    append('lconstraint', [l, r])
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
                 else:
-                    append(('lconstraint_below', l, r))
+                    append('lconstraint_below', [l, r])
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
                 return
@@ -164,32 +159,29 @@ class Parser:
 
                 # implement primitives
                 if op == ":"  and r2 and not r2.startswith("#"):
-                    append(('object', l, r2))
+                    append('object', [l, r2])
                     add_obj(l)
 
                 elif op == ":":
-                    append(('pobject', l))
+                    append('pobject', [l])
 
                 elif op == "*":
                     if r2.startswith("#"):
                         r2 = ""
-                    append(('actor', l, r2))
+                    append('actor', [l, r2])
                     add_obj(l)
 
                 elif op == "->":
                     edge, _, nlines, maxlen = nl2str(edge)
                     if edge.startswith("<(>"):
-                        append(('message', l, r,
-                                     edge[3:].strip(),
-                                     async_tail, '('))
+                        append('message',
+                               [l, r, edge[3:].strip(), async_tail, '('])
                     elif edge.startswith("<)>"):
-                        append(('message', l, r,
-                                     edge[3:].strip(),
-                                     async_tail, ')'))
+                        append('message',
+                               [l, r, edge[3:].strip(), async_tail, ')'])
                     else:
-                        append(('message', l, r,
-                                     edge,
-                                     async_tail, ''))
+                        append('message',
+                               [l, r, edge, async_tail, ''])
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
                     if rop:
@@ -197,14 +189,14 @@ class Parser:
 
                 elif op == ">":
                     r2, _, nlines, maxlen = nl2str(r2)
-                    append(('active', l))
-                    append(('message', l, l, r2, async_tail, ''))
-                    append(('inactive', l))
+                    append('active', [l])
+                    append('message', [l, l, r2, async_tail, ''])
+                    append('inactive', [l])
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
 
                 elif op == ":>":
-                    append(('cmessage', l, r, edge, None, True))
+                    append('cmessage', [l, r, edge, None, True])
                     add_obj(r)
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
@@ -220,15 +212,15 @@ class Parser:
                     if subterms and len(subterms) == 3 and subterms[1] == "=":
                         # short hand for request+result
                         res, op, edge = subterms
-                        append(('message', l, r, edge, async_tail, ''))
-                        append(('active', r))
-                        append(('rmessage', l, r, res, True))
-                        append(('inactive', r))
+                        append('message', [l, r, edge, async_tail, ''])
+                        append('active', [r])
+                        append('rmessage', [l, r, res, True])
+                        append('inactive', [r])
 
                     # treat case: A => B  result
                     else:
                         # result only
-                        append(('rmessage', r, l, edge, True))
+                        append('rmessage', [r, l, edge, True])
 
                     # post-ops
                     if lop:
@@ -237,7 +229,7 @@ class Parser:
                         do_line(line_nr, r + rop, level + 1)
 
                 elif op == "#>":
-                    append(('dmessage', r, l))
+                    append('dmessage', [r, l])
                     rem_obj(r)
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
@@ -248,10 +240,10 @@ class Parser:
                     r2 = (r + " " + edge).strip()
                     opts, text = parse_option(r2, 2)
                     if not text:
-                        append(('connect_to_comment', l, opts[0]))
+                        append('connect_to_comment', [l, opts[0]])
                     else:
                         text1, text2, nlines, maxlen = nl2str(text)
-                        append(('comment', l, opts, text2))
+                        append('comment', [l, opts, text2])
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
 
@@ -270,11 +262,11 @@ class Parser:
                         if op == "]":
                             r, l = l, r
                         opts, text = parse_option(edge, 1)
-                        append(('begin_frame', r, l, opts, text))
+                        append('begin_frame', [r, l, opts, text])
                     else:
                         if op == "[":
                             r, l = l, r
-                        append(('end_frame', r, l))
+                        append('end_frame', [r, l])
 
                 return
 
@@ -284,19 +276,19 @@ class Parser:
                 for term in terms:
                     l, op = term[:-1], term[-1]
                     if op == "+":
-                        append(('active', l))
+                        append('active', [l])
                     elif op == "-":
-                        append(('inactive', l))
+                        append('inactive', [l])
                     elif op == "!":
-                        append(('blip', l))
+                        append('blip', [l])
                     elif op == "#":
                         rem_obj(l)
-                        append(('complete', l))
+                        append('complete', [l])
                     elif op == "~":
                         rem_obj(l)
-                        append(('delete', l))
+                        append('delete', [l])
                 if ":" in terms:
-                    append(('step',))
+                    append('step', [])
                 return
 
             # all attemps to match by RE failed => output as-is
@@ -307,7 +299,7 @@ class Parser:
 
         return cmds
 
-    def preprocess(self, raw):
+    def preprocess(self, raw: str) -> list[str]:
         # preprocess:
         # - remove tabs
         raw = raw.replace("\t", " ")
@@ -321,7 +313,7 @@ class Parser:
         lines = raw.split('\n')
         return lines
 
-    def parse(self):
+    def parse(self) -> tuple[list[model.Command], str]:
         """
         The parser's entry point
         """

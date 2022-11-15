@@ -1,15 +1,26 @@
 umlsequence2
 ============
 
-UML Sequence Diagrams Generator - Commandline tool to generate
+UML Sequence Diagrams Generator, version 2<sup>[1]</sup> -
+Commandline tool to generate
 diagrams as images in various formats (SVG, PNG, JPG, PDF, etc.) from
 source text files.
 
-Source code: https://github.com/pbauermeister/umlsequence2
+- Source code: https://github.com/pbauermeister/umlsequence2
+- Package page: https://pypi.org/project/umlsequence2/
 
-(This is a pure-Python rewrite of the
+<sub>[1] This is a pure-Python rewrite of the
 https://github.com/pbauermeister/umlsequence project, which was itself
-based on umlgraph by Diomidis Spinellis.)
+based on umlgraph (in Java) by Diomidis Spinellis.</sub>
+
+## Scope
+
+"*A sequence diagram or system sequence diagram (SSD) shows process interactions
+arranged in time sequence in the field of software engineering. It depicts the
+processes involved and the sequence of messages exchanged between the processes
+needed to carry out the functionality.*"
+-- [Wikipedia](https://en.wikipedia.org/wiki/Sequence_diagram)
+## Summary
 
 Source text files are in the so-called "umlsequence" syntax.
 
@@ -20,21 +31,21 @@ Umlsequence syntax example:
     T : t:thread
     O : :Toolkit
     P :
-    
+
     # messages and activations
     E  -> T+ a1:run(3)
     T  -> O+ run()
     O        >callbackLoop()
-    
+
     # creation
     O+ :> P  p:Peer
-    
+
     # message with response
     O- => P  result=handleExpose()
-    
+
     # destruction
     O  #> P
-    
+
     # deactivation
     T- O-
 

@@ -1,24 +1,26 @@
 """Implement graphic primitives as SVG elements."""
+from typing import Sequence
+
 import svgwrite
-from svgwrite import cm, mm
 
 from .config import get_config
 
 
-def cm2px(cm):
+def cm2px(cm: float) -> float:
     return cm * 35.43307
     return round(cm * 35.43307, 2)
 
 
-def px2cm(px):
+def px2cm(px: float) -> float:
     return px / 35.43307
     return round(px / 35.43307, 2)
 
 
 class SvgRenderer:
-    def __init__(self, out_path, percent_zoom, bg_color='white'):
+    def __init__(self, out_path: str, percent_zoom: int,
+                 bg_color: str = 'white'):
         self.dwg = svgwrite.Drawing(filename=out_path, debug=True)
-        self.zoom = percent_zoom/100
+        self.zoom = percent_zoom/100.
 
         self.shapes = self.dwg.add(self.dwg.g(
             id='shapes',
@@ -29,14 +31,14 @@ class SvgRenderer:
         if bg_color!= 'none':
             self.add(self.dwg.rect(insert=(0, 0), size=('100%', '100%'),
                                    fill=bg_color))
-        self.x_max = 0
-        self.y_max = 0
+        self.x_max: float = 0
+        self.y_max: float = 0
 
-    def set_max(self, x, y):
+    def set_max(self, x: float, y: float) -> None:
         self.x_max = max(self.x_max, x)
         self.y_max = max(self.y_max, y)
 
-    def save(self):
+    def save(self) -> None:
         # compute and set real size
         w = int(round(self.x_max * self.zoom + .5, 0))
         h = int(round(self.y_max * self.zoom + .5, 0))
@@ -46,7 +48,7 @@ class SvgRenderer:
         #print(self.dwg.tostring())
         self.dwg.save()
 
-    def circle(self, x, y, r):
+    def circle(self, x: float, y: float, r: float) -> None:
         xp, yp = cm2px(x), cm2px(y)
         rp = cm2px(r)
         a = dict(center=(xp, yp),
@@ -57,7 +59,8 @@ class SvgRenderer:
         self.add(self.dwg.circle(**a))
         self.set_max(xp + rp, yp + rp)
 
-    def polyline(self, points, grey=False, filled=False):
+    def polyline(self, points: Sequence[tuple[float, float]],
+                 grey: bool = False, filled: bool = False) -> None:
         points_px = [(cm2px(x), cm2px(y)) for x, y in points]
         a = dict(points=points_px,
                  fill='white' if filled else 'none',
@@ -66,20 +69,20 @@ class SvgRenderer:
         for xp, yp in points_px:
             self.set_max(xp, yp)
 
-    def polygon(self, points):
+    def polygon(self, points: Sequence[tuple[float, float]]) -> None:
         points_px = [(cm2px(x), cm2px(y)) for x, y in points]
         a = dict(points=points_px, stroke='black', fill='black')
         self.add(self.dwg.polygon(**a))
         for xp, yp in points_px:
             self.set_max(xp, yp)
 
-    def get_text_width(self, text):
+    def get_text_width(self, text: str) -> float:
         #FIXME
         return get_config().TEXT_CHAR_WIDTH * len(text)
 
-    def text(self, x, y, text, underline=False,
-             start=False, middle=False, end=False,
-             light=False):
+    def text(self, x: float, y: float, text: str, underline: bool = False,
+             start: bool = False, middle: bool = False, end: bool = False,
+             light: bool = False) -> None:
         xp, yp = cm2px(x), cm2px(y)
         a = dict(fill='#444' if light else 'black',
                  insert=(xp, yp),
@@ -98,8 +101,9 @@ class SvgRenderer:
             a['text_decoration'] = 'underline'
         self.add(self.dwg.text(text, **a))
 
-    def rect(self, x, y, w, h,
-             transparent=False, grey=False):
+    def rect(self, x: float, y: float, w: float, h: float,
+             transparent: bool = False,
+             grey: bool = False) -> None:
         xp, yp = cm2px(x), cm2px(y)
         wp, hp = cm2px(w), cm2px(h)
         a = dict(insert=(xp, yp),
@@ -110,10 +114,11 @@ class SvgRenderer:
         self.add(self.dwg.rect(**a))
         self.set_max(xp + wp, yp + hp)
 
-    def line(self, x1, y1, x2, y2,
-             grey=False,
-             dashed=False, dotted=False,
-             thick=False):
+    def line(self, x1: float, y1: float, x2: float, y2: float,
+             grey: bool = False,
+             dashed: bool = False,
+             dotted: bool = False,
+             thick: bool = False) -> None:
         x1p, y1p = cm2px(x1), cm2px(y1)
         x2p, y2p = cm2px(x2), cm2px(y2)
         a = dict(start=(x1p, y1p),
@@ -128,7 +133,7 @@ class SvgRenderer:
         self.set_max(x1p, y1p)
         self.set_max(x2p, y2p)
 
-    def actor(self, x, y):
+    def actor(self, x: float, y: float) -> None:
         r = .13
         self.circle(x, y-r, r)
         vertices = [
@@ -149,14 +154,15 @@ class SvgRenderer:
         for points in vertices:
             self.polyline(points)
 
-    def cross(self, x, y, size):
+    def cross(self, x: float, y: float, size: float) -> None:
         d = size / 2
         x1, x2 = x-d, x+d
         y1, y2 = y-d, y+d
         self.line(x1, y2, x2, y1, thick=True)
         self.line(x1, y1, x2, y2, thick=True)
 
-    def arrow_head(self, x, y, size, full, inv):
+    def arrow_head(self, x: float, y: float, size: float,
+                   full: bool, inv: bool) -> None:
         dx = size if inv else -size
         dy = size / 3
         points = [
@@ -170,7 +176,8 @@ class SvgRenderer:
         else:
             self.polyline(points)
 
-    def comment_box(self, x, y, width, height, corner_size):
+    def comment_box(self, x: float, y: float, width: float, height: float,
+                    corner_size: float) -> None:
         d = corner_size
         points = [
             (x + width    , y + d),
@@ -185,7 +192,8 @@ class SvgRenderer:
         ]
         self.polyline(points, filled=True, grey=True)
 
-    def frame_label_box(self, x, y, width, height, corner_size):
+    def frame_label_box(self, x: float, y: float, width: float, height: float,
+                        corner_size: float) -> None:
         d = corner_size
         points = [
             (x            , y             ),
