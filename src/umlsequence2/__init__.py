@@ -25,10 +25,9 @@ import pkg_resources
 
 from .config import get_config, set_config
 from .converter import convert
-from .model import Config
 from .parser import Parser
 from .uml_builder import UmlBuilder
-from . import error
+from . import error, model
 
 VERSION = pkg_resources.require("umlsequence2")[0].version
 
@@ -132,7 +131,7 @@ def parse_args() -> argparse.Namespace:
                  if args.__dict__[k] is not None}
     if conf_args:
         cfg.update(conf_args)
-        set_config(Config(**cfg))
+        set_config(model.Config(**cfg))
 
     return args
 
@@ -194,7 +193,7 @@ def main() -> None:
     try:
         run(args)
     except model.UmlSequenceError as e:
-        error.print_error(e)
+        error.print_error(str(e))
         sys.exit(1)
 
     sys.exit(0)

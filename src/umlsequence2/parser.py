@@ -4,9 +4,9 @@ Tokenize and parse input code, and translate to intermediate commands.
 
 """
 import re
+from typing import Any
 
 from . import model
-from typing import Any
 
 
 def escape(s: str) -> str:
@@ -37,23 +37,14 @@ class Parser:
         "([#A-Za-z_0-9]*)([\+\-\#~!]?)"
         " *"
         "(.*)")
-
-    #RE_MESSAGE_call = re.compile("([A-Za-z_0-9]+) *(=) *(.*)")
     RE_MESSAGE_call = re.compile("(.*?) *(=) *(.*)")
-
     RE_OBJ_STATE = re.compile("([A-Za-z_0-9]+[\+\-\#~!]|:)+")
-
     RE_CONSTRAINT = re.compile("([A-Za-z_0-9]*)([\+\-\#~!]?) *(_?)\{(.*)\}")
 
     extensions = ['.dot']
 
     def __init__(self, raw: str):
-        # save call arguments for later use in format()
-        #self.raw = raw.encode('utf-8')
-        #self.raw = raw.encode('latin1')
         self.raw = raw
-
-        return
 
     def parse1(self, lines: list[str]) -> list[model.Command]:
         cmds: list[model.Command] = []

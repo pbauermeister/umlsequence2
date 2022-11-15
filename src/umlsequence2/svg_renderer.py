@@ -2,7 +2,6 @@
 from typing import Sequence
 
 import svgwrite
-from svgwrite import cm, mm
 
 from .config import get_config
 

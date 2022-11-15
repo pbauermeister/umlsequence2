@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import re
 import sys
-from collections import OrderedDict, namedtuple
-from subprocess import PIPE, Popen
-from typing import Any, TypeVar, Callable
+from collections import OrderedDict
+from typing import Any, Callable, TypeVar
 
 from .config import get_config
 from .svg_renderer import SvgRenderer
@@ -33,10 +32,10 @@ class CheckedOrderedDict(OrderedDict[str, T]):
 
     def __getitem__(self, key: str) -> T:
         try:
-            return super().__getitem__(key)
+            res = super().__getitem__(key)
         except KeyError:
             error(f'There is no {self.name} named "{key}"', self.builder)
-
+        return res
 
 CODict = CheckedOrderedDict
 
