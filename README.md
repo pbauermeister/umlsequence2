@@ -74,6 +74,17 @@ Installing via pip3
 [sudo] pip3 install umlsequence2
 ```
 
+## Installation troubleshooting
+
+If you get an error at runtime like:
+```
+ModuleNotFoundError: No module named 'reportlab.graphics._renderPM'
+```
+you may have to reinstall reportlab:
+```
+[sudo] python3 -m pip install --upgrade --force-reinstall reportlab
+```
+
 Usage
 -----
 

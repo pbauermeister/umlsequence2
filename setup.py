@@ -12,7 +12,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="umlsequence2",
-    version="2.0.6.post1",
+    version="2.0.6.post2",
     description="UML Sequence diagram generator from text input",
     long_description=long_description,
     long_description_content_type="text/markdown",
