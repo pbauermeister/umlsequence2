@@ -46,7 +46,7 @@ def generate_svg(input_fp: TextIO, output_path: str, percent_zoom: int,
 
 
 def generate(input_fp: TextIO, output_path: str, percent_zoom: int,
-             debug: bool, bgcolor: str, format: str) -> None:
+             verbose: bool, debug: bool, bgcolor: str, format: str) -> None:
     if debug:
         print(dict(input=input_fp.name,
                    output=output_path,
@@ -55,6 +55,9 @@ def generate(input_fp: TextIO, output_path: str, percent_zoom: int,
                    bgcolor=bgcolor,
                    format=format,
         ), file=sys.stderr)
+
+    if verbose:
+        print(f'umlsequence2: generating file \'{output_path}\'', file=sys.stderr)
 
     if format == 'svg':
         generate_svg(input_fp, output_path, percent_zoom, debug, bgcolor)
@@ -106,6 +109,11 @@ def parse_args() -> argparse.Namespace:
                         ' https://developer.mozilla.org/en-US/docs/Web/CSS/color_value'
                         ' for a list of valid names; default is white')
 
+    parser.add_argument('--verbose',
+                        action='store_true',
+                        default=False,
+                        help='emits verbose messages')
+
     parser.add_argument('--debug',
                         action='store_true',
                         default=False,
@@ -154,7 +162,7 @@ def run(args: argparse.Namespace) -> None:
             inp = io.StringIO(snippet['src'])
             name = snippet['output']
             inp.name = name
-            generate(inp, name, args.percent_zoom, args.debug,
+            generate(inp, name, args.percent_zoom, args.debug, args.verbose,
                      args.background_color, args.format)
             print(f'{sys.argv[0]}: generated {name}', file=sys.stderr)
         return
@@ -172,13 +180,13 @@ def run(args: argparse.Namespace) -> None:
         # output to stdout
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, 'file.svg')
-            generate(inp, path, args.percent_zoom, args.debug,
+            generate(inp, path, args.percent_zoom, args.debug, args.verbose,
                      args.background_color, args.format)
             with open(path) as f:
                 print(f.read())
     else:
         # output to file
-        generate(inp, name, args.percent_zoom, args.debug,
+        generate(inp, name, args.percent_zoom, args.debug, args.verbose,
                  args.background_color, args.format)
 
 

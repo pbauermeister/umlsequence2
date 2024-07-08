@@ -12,11 +12,11 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="umlsequence2",
-    version="2.0.6.post2",
+    version="2.1.0",
     description="UML Sequence diagram generator from text input",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pbauermeister/dfd",
+    url="https://github.com/pbauermeister/umlsequence2",
     author="Pascal Bauermeister",
     author_email="pascal.bauermeister@gmail.com",
     classifiers=[
@@ -50,9 +50,9 @@ setup(
         ],
     },
     project_urls={
-        "Bug Reports": "https://github.com/pbauermeister/dfd/issues",
+        "Bug Reports": "https://github.com/pbauermeister/umlsequence2/issues",
 #        "Funding": "https://donate.pypi.org",
 #        "Say Thanks!": "http://saythanks.io/to/example",
-        "Source": "https://github.com/pbauermeister/dfd",
+        "Source": "https://github.com/pbauermeister/umlsequence2",
     },
 )
