@@ -6,11 +6,14 @@ https://packaging.python.org/guides/distributing-packages-using-setuptools/
 
 from setuptools import setup, find_packages
 import pathlib
-import changelog
+
+CHANGELOG = """
+2.1.1-post1   Build system: Add a Makefile
+"""
 
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
-version = changelog.CHANGELOG.strip().split()[0]
+version = CHANGELOG.strip().split()[0]
 
 setup(
     name="umlsequence2",

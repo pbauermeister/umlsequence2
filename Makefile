@@ -41,7 +41,7 @@ build: ## build
 	python3 setup.py build
 
 install-locally: clean uninstall build ## build and reinstall locally
-	python3 setup.py install
+	python3 setup.py install --user
 	pip show umlsequence2
 
 doc: ## make diagrams of doc
@@ -53,3 +53,6 @@ all: black lint install-locally tests doc ## Run all the above
 
 publish-to-pypi: all ## publish to pypi
 	scripts/publish-to-pypi.sh
+
+reinstall-from-pip: ## reinstall from pip
+	pip install --force-reinstall umlsequence2
