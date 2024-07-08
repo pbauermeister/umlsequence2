@@ -15,8 +15,7 @@
 
 . ./set-ex.sh
 
-./build.sh
-
+pip install twine
 
 banner2 "Publishing to Pypi"
 
@@ -26,5 +25,5 @@ if [ ! -f .token ]; then
 fi
 
 python3 setup.py sdist
-python3 -m twine upload --username __token__ dist/* \
+python3 -m twine upload --username __token__ dist/*.tar.gz \
 	--password $(cat .token) --verbose

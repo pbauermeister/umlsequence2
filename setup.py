@@ -6,13 +6,15 @@ https://packaging.python.org/guides/distributing-packages-using-setuptools/
 
 from setuptools import setup, find_packages
 import pathlib
+import changelog
 
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
+version = changelog.CHANGELOG.strip().split()[0]
 
 setup(
     name="umlsequence2",
-    version="2.1.0",
+    version=version,
     description="UML Sequence diagram generator from text input",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -38,12 +40,7 @@ setup(
         "dev": ["check-manifest"],
         "test": ["coverage"],
     },
-    package_data={
-        #        "umlsequence2": ["tbdpackage__data.dat"],
-    },
-    #    data_files=[('data_flow_diagram', ["VERSION"])],
-    # The following would provide a command called `umlsequence2` which
-    # executes the function `main` from this package when invoked:
+    package_data={},
     entry_points={
         "console_scripts": [
             "umlsequence2=umlsequence2:main",
@@ -51,8 +48,6 @@ setup(
     },
     project_urls={
         "Bug Reports": "https://github.com/pbauermeister/umlsequence2/issues",
-        #        "Funding": "https://donate.pypi.org",
-        #        "Say Thanks!": "http://saythanks.io/to/example",
         "Source": "https://github.com/pbauermeister/umlsequence2",
     },
 )
