@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 import pathlib
 
 CHANGELOG = """
-2.1.1-post1   Build system: Add a Makefile
+2.1.1-post3   Build system: Add a Makefile
 """
 
 here = pathlib.Path(__file__).parent.resolve()
@@ -38,7 +38,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.10, <4",
-    install_requires=["svgwrite", "svglib", "reportlab"],
+    install_requires=["svgwrite", "svglib", "reportlab>=4.2.0"],
     extras_require={
         "dev": ["check-manifest"],
         "test": ["coverage"],
