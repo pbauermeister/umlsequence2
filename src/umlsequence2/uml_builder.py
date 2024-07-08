@@ -9,7 +9,7 @@ from typing import Any, Callable, TypeVar
 from .config import get_config
 from .svg_renderer import SvgRenderer
 
-from. import model
+from . import model
 
 RX_COMMENT_POS = re.compile(r'\s*(\S+)\s+(\S+)')
 RX_FRAME_OPTS = re.compile(r'\s*(\S+)\s+(\S+)')
@@ -17,8 +17,8 @@ RX_FRAME_OPTS = re.compile(r'\s*(\S+)\s+(\S+)')
 
 def error(message: str, builder: UmlBuilder) -> None:
     raise model.UmlSequenceError(
-        f'ERROR: {message}:\n'
-        f'  {builder.line_nr}: {builder.line}')
+        f'ERROR: {message}:\n' f'  {builder.line_nr}: {builder.line}'
+    )
 
 
 T = TypeVar("T")
@@ -37,12 +37,18 @@ class CheckedOrderedDict(OrderedDict[str, T]):
             error(f'There is no {self.name} named "{key}"', self.builder)
         return res
 
+
 CODict = CheckedOrderedDict
 
 
 class UmlBuilder:
-    def __init__(self, lines: list[model.Command], out_path: str,
-                 percent_zoom: int, bg_color: str) -> None:
+    def __init__(
+        self,
+        lines: list[model.Command],
+        out_path: str,
+        percent_zoom: int,
+        bg_color: str,
+    ) -> None:
         self.lines = lines
         self.gfx = SvgRenderer(out_path, percent_zoom, bg_color)
         self.warnings: set[str] = set()
@@ -61,8 +67,8 @@ class UmlBuilder:
         self.frame_dic: CODict[model.Frame] = CODict('frame', self)
         self.line_nr = 0
         self.line = None
-        self.x_max = 0.
-        self.y_max = 0.
+        self.x_max = 0.0
+        self.y_max = 0.0
 
         # execute each line
         for line in self.lines:
@@ -74,7 +80,7 @@ class UmlBuilder:
         self.handle_cmd(None, None)
 
         # close remaining activations
-        self.ypos += self.cfg.STEP_NORMAL/2
+        self.ypos += self.cfg.STEP_NORMAL / 2
         for name, stack in self.activity_dic.items():
             for i in range(len(stack)):
                 self.inactivate(name)
@@ -100,20 +106,22 @@ class UmlBuilder:
         self.gfx.save()
 
     def add(self, layer: int, fn: Callable[..., Any], *args: Any, **kw: Any) -> None:
-        if layer not in self.g: self.g[layer] = []
+        if layer not in self.g:
+            self.g[layer] = []
         self.g[layer].append((fn, args, kw))
 
     def set_max(self, x: float, y: float) -> None:
         self.x_max = max(self.x_max, x)
         self.y_max = max(self.y_max, y)
 
-    def get_x(self, obj: model.Object, center: bool = False,
-              activity: bool = False) -> float:
+    def get_x(
+        self, obj: model.Object, center: bool = False, activity: bool = False
+    ) -> float:
         x = obj.index * (self.cfg.COLUMN_WIDTH + self.cfg.COLUMN_SPACING)
         if center:
             x += self.cfg.COLUMN_WIDTH / 2
         if activity:
-            x += self.nb_active(obj.name) * self.cfg.ACTIVITY_WIDTH/2
+            x += self.nb_active(obj.name) * self.cfg.ACTIVITY_WIDTH / 2
         return x
 
     def warn(self, cmd: str, args: list[Any], warning: str) -> None:
@@ -140,7 +148,8 @@ class UmlBuilder:
         return index
 
     def handle_trace(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'trace': return
+        if cmd != 'trace':
+            return
         self.line_nr, self.line = args
 
     def handle_object(self, cmd: str, args: list[Any]) -> None:
@@ -150,7 +159,7 @@ class UmlBuilder:
             if cmd in ('object', 'actor'):
                 name, label = args
             else:
-                name, = args
+                (name,) = args
                 label = None
 
             if name in self.objects_dic:
@@ -158,11 +167,12 @@ class UmlBuilder:
             else:
                 index = self.compute_object_index()
 
-
             ypos = self.ypos
-            if cmd == 'actor': ypos += self.cfg.ACTOR_DESCENT
-            self.objects_dic[name] = model.Object(cmd, index, name, label,
-                                            ypos, self.activity_row)
+            if cmd == 'actor':
+                ypos += self.cfg.ACTOR_DESCENT
+            self.objects_dic[name] = model.Object(
+                cmd, index, name, label, ypos, self.activity_row
+            )
             self.activity_dic[name] = []
         elif self.last_cmd in olike:
             # draw objects
@@ -178,11 +188,18 @@ class UmlBuilder:
                     self.add(1, self.gfx.text, x, y, o.label, middle=True)
                 else:  # regular object
                     x, y = self.get_x(o), self.ypos
-                    self.add(1, self.gfx.rect, x, y,
-                             self.cfg.COLUMN_WIDTH, self.cfg.OBJECT_HEIGHT)
+                    self.add(
+                        1,
+                        self.gfx.rect,
+                        x,
+                        y,
+                        self.cfg.COLUMN_WIDTH,
+                        self.cfg.OBJECT_HEIGHT,
+                    )
                     x, y = self.get_x(o, True), self.ypos + self.cfg.OBJECT_LABEL_Y
-                    self.add(1, self.gfx.text, x, y, o.label,
-                             middle=True, underline=True)
+                    self.add(
+                        1, self.gfx.text, x, y, o.label, middle=True, underline=True
+                    )
             self.ypos += self.cfg.OBJECT_STEP
             self.activity_row += 1
 
@@ -193,7 +210,8 @@ class UmlBuilder:
         return
 
     def handle_oconstraint(self, cmd: str, args: list[Any]) -> bool:
-        if cmd != 'oconstraint': return False
+        if cmd != 'oconstraint':
+            return False
         name, text = args
         o = self.objects_dic[name]
         x, y = self.get_x(o), o.ypos - self.cfg.TEXT_MARGIN_Y
@@ -201,16 +219,18 @@ class UmlBuilder:
         return True
 
     def handle_lconstraint(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'lconstraint': return
+        if cmd != 'lconstraint':
+            return
         name, text = args
         o = self.objects_dic[name]
-        x = self.get_x(o, True, True)  + self.cfg.TEXT_MARGIN_X
+        x = self.get_x(o, True, True) + self.cfg.TEXT_MARGIN_X
         y = self.ypos - self.cfg.TEXT_MARGIN_Y
         self.add(1, self.gfx.text, x, y, text)
         self.ypos += self.cfg.STEP_SMALL
 
     def handle_lconstraint_below(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'lconstraint_below': return
+        if cmd != 'lconstraint_below':
+            return
         name, text = args
         o = self.objects_dic[name]
         x = self.get_x(o, True, True) + self.cfg.TEXT_MARGIN_X
@@ -219,21 +239,23 @@ class UmlBuilder:
 
     def handle_active(self, cmd: str, args: list[Any]) -> None:
         if cmd == 'active':
-            name, = args
+            (name,) = args
             self.activity_dic[name].append(self.ypos)
 
     def handle_inactive(self, cmd: str, args: list[Any]) -> None:
         if cmd == 'inactive':
-            name, = args
+            (name,) = args
             self.inactivate(name)
 
     def handle_message(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'message': return
+        if cmd != 'message':
+            return
         src, dst, txt, asynch, align = args
         self._handle_message(src, dst, txt, False, asynch, align=align)
 
     def handle_cmessage(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'cmessage': return
+        if cmd != 'cmessage':
+            return
         src, dst, label, message, asynch = args
         self.ypos += self.cfg.STEP_NORMAL
         save1_y = self.ypos
@@ -242,14 +264,16 @@ class UmlBuilder:
 
         self.handle_object('', None)  # draw
         save2_y = self.ypos
-        self.ypos = save1_y - self.cfg.OBJECT_STEP/2
+        self.ypos = save1_y - self.cfg.OBJECT_STEP / 2
         text = message or "«create»"
-        self._handle_message(src, dst, text, True, True,
-                             shorten=self.cfg.COLUMN_WIDTH/2)
+        self._handle_message(
+            src, dst, text, True, True, shorten=self.cfg.COLUMN_WIDTH / 2
+        )
         self.ypos = save2_y
 
     def handle_dmessage(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'dmessage': return
+        if cmd != 'dmessage':
+            return
         dst, src = args
         text = "«destroy»"
         self._handle_message(src, dst, text, True, True)
@@ -261,13 +285,21 @@ class UmlBuilder:
         self.ypos += self.cfg.STEP_NORMAL
 
     def handle_rmessage(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'rmessage': return
+        if cmd != 'rmessage':
+            return
         src, dst, txt, asynch = args
         self._handle_message(dst, src, txt, True, True)
 
-    def _handle_message(self, src: str, dst: str, txt: str,
-                        dashed: bool, asynch: bool,
-                        shorten:float = 0, align: str = '') -> None:
+    def _handle_message(
+        self,
+        src: str,
+        dst: str,
+        txt: str,
+        dashed: bool,
+        asynch: bool,
+        shorten: float = 0,
+        align: str = '',
+    ) -> None:
         self.ypos += self.cfg.STEP_NORMAL
         o1 = self.objects_dic[src]
         o2 = self.objects_dic[dst]
@@ -309,11 +341,12 @@ class UmlBuilder:
                     x = self.get_x(o2, True) - self.cfg.TEXT_MARGIN_Y - shorten
                     end = True
                 else:
-                    x = (self.get_x(o1, True) + self.get_x(o2, True) - shorten)/2
+                    x = (self.get_x(o1, True) + self.get_x(o2, True) - shorten) / 2
                     middle = True
                 y = self.ypos
-                self.add(2, self.gfx.text, x, y, txt,
-                         start=start, middle=middle, end=end)
+                self.add(
+                    2, self.gfx.text, x, y, txt, start=start, middle=middle, end=end
+                )
                 self.ypos += self.cfg.TEXT_MARGIN_Y
 
             x1 = self.get_x(o1, True, True) + self.cfg.MESSAGE_SPACING
@@ -321,37 +354,51 @@ class UmlBuilder:
             x2 -= self.cfg.ACTIVITY_WIDTH / 2 if self.nb_active(o2.name) else 0
 
             # head line
-            if inv: x1 += self.cfg.MESSAGE_SPACING
-            else: x2 -= self.cfg.MESSAGE_SPACING
+            if inv:
+                x1 += self.cfg.MESSAGE_SPACING
+            else:
+                x2 -= self.cfg.MESSAGE_SPACING
             self.add(2, self.gfx.line, x1, self.ypos, x2, self.ypos, dashed=dashed)
-            if inv: x1 -= self.cfg.MESSAGE_SPACING
-            else: x2 += self.cfg.MESSAGE_SPACING
+            if inv:
+                x1 -= self.cfg.MESSAGE_SPACING
+            else:
+                x2 += self.cfg.MESSAGE_SPACING
 
         # arrow head
-        self.add(2, self.gfx.arrow_head, x1 if inv else x2, self.ypos,
-                 self.cfg.ARROW_HEAD_SIZE, not asynch, inv)
+        self.add(
+            2,
+            self.gfx.arrow_head,
+            x1 if inv else x2,
+            self.ypos,
+            self.cfg.ARROW_HEAD_SIZE,
+            not asynch,
+            inv,
+        )
 
     def handle_step(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'step': return
+        if cmd != 'step':
+            return
         self.ypos += self.cfg.STEP_NORMAL
 
     def handle_blip(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'blip': return
-        name, = args
+        if cmd != 'blip':
+            return
+        (name,) = args
         self.handle_active('active', [name])
         self.ypos += self.cfg.STEP_NORMAL
         self.handle_inactive('inactive', [name])
 
     def handle_comment(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'comment': return
+        if cmd != 'comment':
+            return
         name, options, text = args
         comment_name, pos = options
 
         o = self.objects_dic[name]
         height = len(text.split('\n')) * self.cfg.TEXT_HEIGHT + self.cfg.TEXT_MARGIN_Y
         x1, y1 = self.get_x(o, True), self.ypos
-        x2, y2 = x1, y1 - height/2
-        x2offset = self.cfg.COLUMN_WIDTH/4
+        x2, y2 = x1, y1 - height / 2
+        x2offset = self.cfg.COLUMN_WIDTH / 4
 
         lines = text.split('\n')
         length = max([self.gfx.get_text_width(l) for l in lines])
@@ -370,8 +417,7 @@ class UmlBuilder:
             elif key == 'right':
                 x2offset = value
             else:
-                self.warn(cmd, args,
-                          f'Unknown layout option "{key} {value}"')
+                self.warn(cmd, args, f'Unknown layout option "{key} {value}"')
         x2 += x2offset
 
         comment = model.Comment(x2, y2, width, height)
@@ -384,28 +430,31 @@ class UmlBuilder:
         dx = self.cfg.TEXT_MARGIN_X
         dy = self.cfg.TEXT_HEIGHT
         for line in lines:
-            self.add(3, self.gfx.text, x2+dx, y2+dy, line, light=True)
+            self.add(3, self.gfx.text, x2 + dx, y2 + dy, line, light=True)
             dy += self.cfg.TEXT_HEIGHT
 
-    def make_comment_connector(self, x: float, y: float, comment: model.Comment) -> None:
+    def make_comment_connector(
+        self, x: float, y: float, comment: model.Comment
+    ) -> None:
         if comment.x > x:
             x2 = comment.x
-            y2 = comment.y + comment.height/2
+            y2 = comment.y + comment.height / 2
         elif comment.x + comment.width < x:
             x2 = comment.x + comment.width
-            y2 = comment.y + comment.height/2
+            y2 = comment.y + comment.height / 2
         elif comment.y > y:
-            x2 = comment.x + comment.width/2
+            x2 = comment.x + comment.width / 2
             y2 = comment.y
         elif comment.y + comment.height < y:
-            x2 = comment.x + comment.width/2
+            x2 = comment.x + comment.width / 2
             y2 = comment.y + comment.height
         else:
             return
         self.add(3, self.gfx.line, x, y, x2, y2, grey=True, dotted=True)
 
     def handle_connect_to_comment(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'connect_to_comment': return
+        if cmd != 'connect_to_comment':
+            return
         src, dst = args
         o = self.objects_dic[src]
         c = self.comment_dic[dst]
@@ -413,7 +462,8 @@ class UmlBuilder:
         self.make_comment_connector(x1, y1, c)
 
     def handle_begin_frame(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'begin_frame': return
+        if cmd != 'begin_frame':
+            return
         src, fname, options, label = args
         out = 0
 
@@ -426,8 +476,7 @@ class UmlBuilder:
                 elif key == 'out':
                     out = value
                 else:
-                    self.warn(cmd, args,
-                              f'Unknown option "{key} {value}"')
+                    self.warn(cmd, args, f'Unknown option "{key} {value}"')
         self.ypos += self.cfg.STEP_SMALL
         o = self.objects_dic[src]
         x = self.get_x(o)
@@ -436,42 +485,51 @@ class UmlBuilder:
         self.ypos += self.cfg.STEP_NORMAL
 
     def handle_end_frame(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'end_frame': return
+        if cmd != 'end_frame':
+            return
         fname, dst = args
         o = self.objects_dic.get(dst) or self.dead_objects_dic.get(dst)
         frame = self.frame_dic[fname]
         self.ypos += self.cfg.STEP_SMALL
         x1, x2 = frame.xpos, self.get_x(o)
-        if x1 > x2: x1, x2 = x2, x1
+        if x1 > x2:
+            x1, x2 = x2, x1
         x, y = x1, frame.ypos
         w, h = x2 + self.cfg.COLUMN_WIDTH - x, self.ypos - y
         if frame.out:
             x -= frame.out
-            w += frame.out*2
+            w += frame.out * 2
 
         self.add(2, self.gfx.rect, x, y, w, h, transparent=True, grey=True)
         d = self.cfg.TEXT_DOGEAR
-        width = self.gfx.get_text_width(frame.label) + self.cfg.TEXT_MARGIN_X*2 + d
+        width = self.gfx.get_text_width(frame.label) + self.cfg.TEXT_MARGIN_X * 2 + d
         height = self.cfg.TEXT_HEIGHT + self.cfg.TEXT_MARGIN_Y
         self.add(2, self.gfx.frame_label_box, x, y, width, height, d)
 
         dx = self.cfg.TEXT_MARGIN_X
         dy = self.cfg.TEXT_HEIGHT
-        self.add(2, self.gfx.text, x+dx, y+dy, frame.label, light=True)
+        self.add(2, self.gfx.text, x + dx, y + dy, frame.label, light=True)
         self.ypos += self.cfg.STEP_SMALL
 
     def handle_delete(self, cmd: str, args: list[Any]) -> None:
-        if cmd != 'delete': return
-        name, = args
+        if cmd != 'delete':
+            return
+        (name,) = args
         o = self.objects_dic[name]
         x = self.get_x(o, True)
-        self.add(2, self.gfx.cross, x, self.ypos + self.cfg.CROSS_SIZE/2, self.cfg.CROSS_SIZE)
+        self.add(
+            2,
+            self.gfx.cross,
+            x,
+            self.ypos + self.cfg.CROSS_SIZE / 2,
+            self.cfg.CROSS_SIZE,
+        )
         self.handle_complete('complete', [name])
         self.ypos += self.cfg.STEP_NORMAL
 
     def handle_complete(self, cmd: str, args: list[Any]) -> None:
         if cmd == 'complete':
-            name, = args
+            (name,) = args
             stack = self.activity_dic[name]
             # inactivate all levels
             for i in range(len(stack)):
@@ -481,8 +539,8 @@ class UmlBuilder:
             if o.label is not None:
                 x = self.get_x(o, True)
                 y1 = o.ypos + self.cfg.STEP_NORMAL
-                y2 = self.ypos + .1
-                self.add(1, self.gfx.line, x, y1, x, y2,dashed=True, grey=True)
+                y2 = self.ypos + 0.1
+                self.add(1, self.gfx.line, x, y1, x, y2, dashed=True, grey=True)
             self.dead_objects_dic[name] = self.objects_dic[name]
             del self.objects_dic[name]
 
@@ -522,15 +580,18 @@ class UmlBuilder:
 
     def inactivate(self, name: str) -> None:
         o = self.objects_dic[name]
-        x = self.get_x(o, True) + self.nb_active(name)*self.cfg.ACTIVITY_WIDTH/2 \
+        x = (
+            self.get_x(o, True)
+            + self.nb_active(name) * self.cfg.ACTIVITY_WIDTH / 2
             - self.cfg.ACTIVITY_WIDTH
+        )
         if not len(self.activity_dic[name]):
             error(f'Cannot inactivate {name} because it is not active', self)
         y = self.activity_dic[name][-1]
         w = self.cfg.ACTIVITY_WIDTH
-        h = self.ypos-self.activity_dic[name][-1]
+        h = self.ypos - self.activity_dic[name][-1]
         if h == 0:
             self.ypos += self.cfg.STEP_NORMAL
-            h = self.ypos-self.activity_dic[name][-1]
+            h = self.ypos - self.activity_dic[name][-1]
         self.activity_boxes.append(model.Rectangle(x, y, w, h))
         self.activity_dic[name].pop()

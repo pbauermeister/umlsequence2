@@ -36,7 +36,8 @@ class Parser:
         " *"
         "([#A-Za-z_0-9]*)([\+\-\#~!]?)"
         " *"
-        "(.*)")
+        "(.*)"
+    )
     RE_MESSAGE_call = re.compile("(.*?) *(=) *(.*)")
     RE_OBJ_STATE = re.compile("([A-Za-z_0-9]+[\+\-\#~!]|:)+")
     RE_CONSTRAINT = re.compile("([A-Za-z_0-9]*)([\+\-\#~!]?) *(_?)\{(.*)\}")
@@ -72,10 +73,10 @@ class Parser:
         def parse_option(text: str, nb_options: int) -> tuple[list[str], str]:
             if text.startswith("["):
                 opts, text = text[1:].split("]", 1)
-                options = (opts + ","*nb_options).split(",")[:nb_options]
+                options = (opts + "," * nb_options).split(",")[:nb_options]
             else:
                 opts = ""
-            options = (opts + ","*nb_options).split(",")[:nb_options]
+            options = (opts + "," * nb_options).split(",")[:nb_options]
             return [s.strip() for s in options], text.strip()
 
         def do_line(line_nr: int, line: str, level: int = 0) -> None:
@@ -104,7 +105,8 @@ class Parser:
                     if not self.objects:
                         raise model.UmlSequenceError(
                             f'{line}: Adding constraint to last object, '
-                            f'while no object is defined')
+                            f'while no object is defined'
+                        )
                     append('oconstraint', [self.objects[-1], r])
                 elif not below:
                     append('lconstraint', [l, r])
@@ -158,7 +160,7 @@ class Parser:
                 r2 = r2.replace('"', '\\"')
 
                 # implement primitives
-                if op == ":"  and r2 and not r2.startswith("#"):
+                if op == ":" and r2 and not r2.startswith("#"):
                     append('object', [l, r2])
                     add_obj(l)
 
@@ -174,14 +176,11 @@ class Parser:
                 elif op == "->":
                     edge, _, nlines, maxlen = nl2str(edge)
                     if edge.startswith("<(>"):
-                        append('message',
-                               [l, r, edge[3:].strip(), async_tail, '('])
+                        append('message', [l, r, edge[3:].strip(), async_tail, '('])
                     elif edge.startswith("<)>"):
-                        append('message',
-                               [l, r, edge[3:].strip(), async_tail, ')'])
+                        append('message', [l, r, edge[3:].strip(), async_tail, ')'])
                     else:
-                        append('message',
-                               [l, r, edge, async_tail, ''])
+                        append('message', [l, r, edge, async_tail, ''])
                     if lop:
                         do_line(line_nr, l + lop, level + 1)
                     if rop:
@@ -294,8 +293,7 @@ class Parser:
             # all attemps to match by RE failed => output as-is
 
         for line_nr, line in enumerate(lines):
-            do_line(line_nr+1, line)
-
+            do_line(line_nr + 1, line)
 
         return cmds
 
